@@ -4,6 +4,7 @@ import { MarketingModule } from '../marketing/marketing.module';
 import { AttributionCredit } from '../attribution/entities/attribution-credit.entity';
 import { DashboardController } from './dashboard.controller';
 import { DashboardService } from './dashboard.service';
+import { ReportExporter } from './report-exporter';
 
 /**
  * Reportes del dashboard (solo lectura). Importa MarketingModule por los
@@ -13,7 +14,7 @@ import { DashboardService } from './dashboard.service';
 @Module({
   imports: [MarketingModule, TypeOrmModule.forFeature([AttributionCredit])],
   controllers: [DashboardController],
-  providers: [DashboardService],
+  providers: [DashboardService, ReportExporter],
   exports: [DashboardService],
 })
 export class DashboardModule {}

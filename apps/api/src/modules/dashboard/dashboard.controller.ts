@@ -1,7 +1,17 @@
-import { Controller, Get, Param, ParseUUIDPipe, Query } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Param,
+  ParseUUIDPipe,
+  Query,
+  Res,
+} from '@nestjs/common';
+import type { Response } from 'express';
 import { BusinessId } from '../../common/decorators/business-id.decorator';
 import { ReportFilterDto } from '../../common/dto/report-filter.dto';
 import { DashboardService } from './dashboard.service';
+import { ExportReportDto } from './dto/export-report.dto';
+import { ReportExporter } from './report-exporter';
 import {
   AudienceOriginPerformance,
   CampaignDrilldown,
@@ -11,7 +21,10 @@ import {
 
 @Controller('dashboard')
 export class DashboardController {
-  constructor(private readonly dashboard: DashboardService) {}
+  constructor(
+    private readonly dashboard: DashboardService,
+    private readonly exporter: ReportExporter,
+  ) {}
 
   /** Seis métricas core del dashboard de entrada. */
   @Get('metrics')
@@ -48,5 +61,31 @@ export class DashboardController {
     @Query() filter: ReportFilterDto,
   ): Promise<AudienceOriginPerformance[]> {
     return this.dashboard.getAudiencePerformance(businessId, filter);
+  }
+
+  /** Exporta el reporte por campaña a CSV (default) o PDF para stakeholders. */
+  @Get('export')
+  async export(
+    @BusinessId() businessId: string,
+    @Query() dto: ExportReportDto,
+    @Res() res: Response,
+  ): Promise<void> {
+    const rows = await this.dashboard.getCampaignTable(businessId, dto);
+    if (dto.format === 'pdf') {
+      const pdf = await this.exporter.toPdf(rows);
+      res
+        .set({
+          'Content-Type': 'application/pdf',
+          'Content-Disposition': 'attachment; filename="reporte-campanas.pdf"',
+        })
+        .send(pdf);
+      return;
+    }
+    res
+      .set({
+        'Content-Type': 'text/csv; charset=utf-8',
+        'Content-Disposition': 'attachment; filename="reporte-campanas.csv"',
+      })
+      .send(this.exporter.toCsv(rows));
   }
 }
