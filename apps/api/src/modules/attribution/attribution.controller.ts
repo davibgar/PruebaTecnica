@@ -1,0 +1,22 @@
+import { Controller, HttpCode, Post, Query } from '@nestjs/common';
+import { BusinessId } from '../../common/decorators/business-id.decorator';
+import { AttributionService, RecomputeResult } from './attribution.service';
+import { RecomputeDto } from './dto/recompute.dto';
+
+@Controller('attribution')
+export class AttributionController {
+  constructor(private readonly attribution: AttributionService) {}
+
+  /**
+   * Recalcula los créditos de atribución del negocio para los tres modelos.
+   * Comando idempotente: reemplaza el resultado anterior.
+   */
+  @Post('recompute')
+  @HttpCode(200)
+  recompute(
+    @BusinessId() businessId: string,
+    @Query() dto: RecomputeDto,
+  ): Promise<RecomputeResult> {
+    return this.attribution.recompute(businessId, dto.window);
+  }
+}

@@ -1,98 +1,184 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Backend — NodoTech Marketing (Análisis)
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+API en **NestJS + PostgreSQL (TypeORM)** que resuelve el cruce Marketing↔POS, la
+atribución multi-touch conmutable y los reportes con reconciliación ROAS.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+---
 
-## Description
+## 1. Arranque
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+### Requisitos
+- Node 20+ y npm
+- Docker (para PostgreSQL) o un PostgreSQL local
 
-## Project setup
+### Pasos
 
 ```bash
-$ npm install
+# 1. Variables de entorno
+cp .env.example .env          # ajusta credenciales/puerto si hace falta
+
+# 2. Base de datos (desde la raíz del repo)
+docker compose up -d          # levanta PostgreSQL
+# Si ya tienes un Postgres ocupando el 5432:
+#   POSTGRES_HOST_PORT=5433 docker compose up -d   (y pon DB_PORT=5433 en .env)
+
+# 3. Dependencias
+npm install
+
+# 4. Esquema (migrations; NO se usa synchronize)
+npm run migration:run
+
+# 5. Levantar la API
+npm run start:dev             # http://localhost:3001/api
 ```
 
-## Compile and run the project
+> Todo endpoint exige el header **`x-business-id`** (aislamiento multi-tenant).
 
-```bash
-# development
-$ npm run start
+### Scripts útiles
+| Script | Qué hace |
+|---|---|
+| `npm run start:dev` | API en modo watch |
+| `npm run build` | Compila a `dist/` |
+| `npm run migration:generate -- src/database/migrations/<Nombre>` | Genera migración desde las entidades |
+| `npm run migration:run` | Aplica migraciones pendientes |
+| `npm run migration:revert` | Revierte la última |
+| `npm test` | Tests unitarios |
 
-# watch mode
-$ npm run start:dev
+---
 
-# production mode
-$ npm run start:prod
+## 2. Arquitectura
+
+### 2.1 Visión general
+
+Monolito modular de NestJS organizado **por dominio**. El flujo de una petición:
+
+```
+HTTP  →  Guard (multi-tenant)  →  Controller  →  Service  →  Repository (TypeORM)  →  PostgreSQL
+            x-business-id          (rutas+DTO)    (lógica)     (SQL / QueryBuilder)
 ```
 
-## Run tests
+Principios que la guían: **SOLID**, **una sola fuente de la verdad**, servicios
+pequeños de responsabilidad única, sin código duplicado ni muerto, y solo se
+abstrae donde hay polimorfismo real (las estrategias de atribución).
 
-```bash
-# unit tests
-$ npm run test
+### 2.2 Estructura de carpetas
 
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+```
+src/
+├─ main.ts                      Bootstrap: ValidationPipe global, prefijo /api, CORS
+├─ app.module.ts               Raíz: ConfigModule, TypeORM, guard global, módulos
+│
+├─ config/
+│  ├─ app.config.ts             Config de app tipada (puerto, CORS, atribución)
+│  ├─ database.config.ts        Opciones de BD — FUENTE ÚNICA (app + CLI migrations)
+│  └─ data-source.ts            DataSource para el CLI de TypeORM
+│
+├─ common/                      Transversal, sin lógica de negocio
+│  ├─ enums/                    Channel, AudienceOrigin, AttributionModel (fuente única)
+│  ├─ entities/tenant.entity.ts Base abstracta: id + businessId + createdAt
+│  ├─ database/numeric.transformer.ts   numeric(PG) → number
+│  ├─ guards/business.guard.ts  Multi-tenant: exige x-business-id
+│  ├─ decorators/business-id.decorator.ts   @BusinessId()
+│  └─ dto/report-filter.dto.ts  Filtros compartidos del dashboard (fuente única)
+│
+├─ database/migrations/         Migraciones de TypeORM (esquema versionado)
+│
+└─ modules/
+   ├─ marketing/                Entidades núcleo (sin controller: se cargan por seed)
+   │  └─ entities/  contact · campaign · touchpoint · sale
+   └─ attribution/              Atribución multi-touch (núcleo técnico)
+      ├─ strategies/            Patrón Strategy + Template Method
+      ├─ attribution-strategy.factory.ts
+      ├─ entities/attribution-credit.entity.ts
+      ├─ attribution.service.ts
+      └─ attribution.controller.ts
 ```
 
-## Deployment
+> Los módulos `dashboard` y `action-center` se añaden en sus fases siguientes; la
+> base ya deja el terreno preparado (entidades, créditos precalculados, filtros).
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+### 2.3 Multi-tenant (aislamiento por `business_id`)
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+- **Decisión:** el tenant viaja por el header **`x-business-id`** (no por usuario
+  autenticado), para enfocar la prueba en el dominio sin una capa de auth real.
+- `BusinessGuard` (global, vía `APP_GUARD`) exige el header y lo coloca en
+  `request.businessId`. El decorador `@BusinessId()` lo inyecta en los controllers.
+- Cada servicio filtra **siempre** por `businessId` → ningún endpoint devuelve
+  datos de otro negocio.
 
-```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
-```
+### 2.4 Modelo de datos
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+| Entidad | Rol |
+|---|---|
+| `Contact` | Identidad única del contacto dentro del negocio (`businessId + externalId`). |
+| `Campaign` | Inversión (`adSpend`) e ingreso reportado por la plataforma (píxel). |
+| `Touchpoint` | Punto de contacto: canal, origen de audiencia, campaña y fecha. |
+| `Sale` | Conversión real del POS: contacto, monto, fecha. |
+| `AttributionCredit` | Crédito **precalculado** por (venta × touchpoint × modelo). |
 
-## Resources
+Todas heredan de `TenantEntity` (id uuid + `businessId` + `createdAt`), evitando
+repetir esos campos (DRY). Cada entidad declara los índices que sus accesos
+necesitan —normalmente uno compuesto que lidera con `businessId`— en lugar de
+indexar `businessId` en la base, para no crear índices redundantes. Los montos
+usan `numeric(14,2)` con un transformer central que los entrega como `number`.
 
-Check out a few resources that may come in handy when working with NestJS:
+### 2.5 Atribución multi-touch — patrones de diseño
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+Es el corazón del backend y el lugar donde los patrones se justifican.
 
-## Support
+**Strategy** — cada modelo es una estrategia intercambiable con el mismo contrato
+(`AttributionStrategy.assign(path, sale)`). Conmutar el modelo desde la UI = usar
+otra estrategia, sin `if/else` regados por el código.
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+**Template Method** — `BaseWeightedStrategy` escribe **una sola vez** la parte
+común: convertir un vector de pesos en crédito (`crédito_i = monto · wᵢ/Σw`) y
+garantizar que **la suma de créditos == monto de la venta** (cuadre exacto en
+centavos: el último touchpoint recibe el remanente). Cada modelo concreto solo
+aporta su `computeWeights`:
 
-## Stay in touch
+| Modelo | Peso de cada touchpoint |
+|---|---|
+| **Lineal** | Todos iguales (`1`) → monto/N. |
+| **Time-decay** | `2^(-Δdías / halfLife)`. Half-life configurable (default **7 días**). |
+| **Position-based (U)** | 40% primero, 40% último, 20% entre intermedios. Bordes: N=1→100%, N=2→50/50. |
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+**Factory** — `AttributionStrategyFactory` resuelve la estrategia por el enum
+`AttributionModel`. Añadir un 4º modelo = una clase nueva registrada aquí, sin
+tocar lo existente (**OCP**).
 
-## License
+**Cómo se calcula (`AttributionService.recompute`)**
+1. Carga touchpoints y ventas del negocio en **2 consultas** (sin N+1).
+2. Agrupa touchpoints por contacto en memoria.
+3. Por cada venta reconstruye el **path** (touchpoints previos dentro de la
+   ventana de atribución, configurable; default 30 días).
+4. Reparte el monto con **cada** estrategia y persiste los créditos.
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+Los tres modelos se **precalculan** y se guardan en `attribution_credits`. Así el
+dashboard solo lee y agrega por **SQL** (`GROUP BY`), y conmutar de modelo es
+instantáneo (no se recalcula el reparto en cada petición). Esa tabla es la
+**fuente única** de los reportes; ciertos campos del touchpoint/venta se
+desnormalizan ahí (campaña, origen, canal, fecha) para que filtros y agregaciones
+sean SQL puro.
+
+### 2.6 Configuración (fuente única)
+
+`database.config.ts` define las opciones de PostgreSQL una sola vez y las
+consumen **ambos**: el `TypeOrmModule` de la app (runtime) y el `DataSource` del
+CLI (migrations). `synchronize` está **siempre en `false`**: el esquema se levanta
+solo con migrations.
+
+### 2.7 Validación y errores
+
+`ValidationPipe` global con `whitelist` + `forbidNonWhitelisted` + `transform`:
+los DTOs (`class-validator`) validan y tipan toda entrada (rango de fechas, modelo
+desconocido, etc.) y Nest responde con los códigos HTTP correctos (400/404/…).
+
+---
+
+## 3. Endpoints
+
+| Verbo | Ruta | Descripción |
+|---|---|---|
+| `POST` | `/api/attribution/recompute?window=<días>` | Recalcula los créditos de los 3 modelos. |
+
+> Se ampliará con los endpoints de `dashboard` y `action-center` en sus fases.
