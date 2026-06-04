@@ -7,28 +7,41 @@ atribución multi-touch conmutable y los reportes con reconciliación ROAS.
 
 ## 1. Arranque
 
-### Requisitos
-- Node 20+ y npm
-- Docker (para PostgreSQL) o un PostgreSQL local
+Requisitos: **Docker** (recomendado) o Node 20+ con un PostgreSQL local.
 
-### Pasos
+### Opción A — Todo en Docker, con hot-reload (recomendado)
+
+Levanta PostgreSQL + API con un solo comando, desde la raíz del repo:
 
 ```bash
-# 1. Variables de entorno
-cp .env.example .env          # ajusta credenciales/puerto si hace falta
-
-# 2. Base de datos (desde la raíz del repo)
-docker compose up -d          # levanta PostgreSQL
+docker compose up -d --build
 # Si ya tienes un Postgres ocupando el 5432:
-#   POSTGRES_HOST_PORT=5433 docker compose up -d   (y pon DB_PORT=5433 en .env)
+#   POSTGRES_HOST_PORT=5433 docker compose up -d --build
+```
 
-# 3. Dependencias
+- **API:** http://localhost:3001/api
+
+La API arranca aplicando las migraciones (no usa `synchronize`) y queda en modo
+**watch**: el código de `apps/api/src` se monta en el contenedor, así que editar
+en tu host recompila dentro del contenedor automáticamente. Dentro de la red de
+Docker la API llega a Postgres por el nombre del servicio (`postgres:5432`), no
+por localhost.
+
+Para una **imagen de producción** (compilada, sin dev-deps):
+
+```bash
+docker build --target runner -t nodotech-api ./apps/api
+```
+
+### Opción B — API en el host (sin Docker para la app)
+
+Solo PostgreSQL en Docker; la API corre en tu máquina:
+
+```bash
+cp .env.example .env          # ajusta DB_PORT si cambiaste POSTGRES_HOST_PORT
+docker compose up -d postgres
 npm install
-
-# 4. Esquema (migrations; NO se usa synchronize)
-npm run migration:run
-
-# 5. Levantar la API
+npm run migration:run         # aplica migraciones (NO se usa synchronize)
 npm run start:dev             # http://localhost:3001/api
 ```
 

@@ -19,5 +19,36 @@ services:
       timeout: 5s
       retries: 5
 
+  api:
+    build:
+      context: ./apps/api
+      target: development # imagen con watch para hot-reload
+    container_name: nodotech_api
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy # espera a que Postgres esté listo
+    environment:
+      PORT: 3001
+      # Dentro de la red de Docker la API llega a Postgres por el NOMBRE del
+      # servicio (postgres) y su puerto interno (5432), no por localhost.
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: nodotech
+      DB_PASSWORD: nodotech
+      DB_NAME: nodotech_marketing
+      CORS_ORIGIN: http://localhost:3000
+      ATTRIBUTION_WINDOW_DAYS: 30
+      ATTRIBUTION_HALF_LIFE_DAYS: 7
+      # Fuerza polling del watcher: los montajes desde Windows no propagan
+      # eventos de filesystem de forma fiable.
+      CHOKIDAR_USEPOLLING: 'true'
+    volumes:
+      # Hot-reload: el código fuente del host se monta en el contenedor.
+      # node_modules NO se monta: se usa el de la imagen (Linux).
+      - ./apps/api/src:/app/src
+    ports:
+      - '${API_HOST_PORT:-3001}:3001'
+
 volumes:
   nodotech_pgdata:
