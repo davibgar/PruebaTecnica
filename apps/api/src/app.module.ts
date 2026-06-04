@@ -1,8 +1,10 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { APP_GUARD } from '@nestjs/core';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import configuration from './config/app.config';
 import { buildDataSourceOptions } from './config/database.config';
+import { BusinessGuard } from './common/guards/business.guard';
 
 @Module({
   imports: [
@@ -18,6 +20,10 @@ import { buildDataSourceOptions } from './config/database.config';
       ...buildDataSourceOptions(),
       autoLoadEntities: true,
     }),
+  ],
+  providers: [
+    // Multi-tenant: el guard se aplica de forma global a todos los endpoints.
+    { provide: APP_GUARD, useClass: BusinessGuard },
   ],
 })
 export class AppModule {}
