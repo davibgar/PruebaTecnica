@@ -4,6 +4,7 @@ import { MarketingModule } from '../marketing/marketing.module';
 import { AttributionCredit } from '../attribution/entities/attribution-credit.entity';
 import { DashboardController } from './dashboard.controller';
 import { DashboardService } from './dashboard.service';
+import { FilterParserService } from './filter-parser.service';
 import { ReportExporter } from './report-exporter';
 
 /**
@@ -14,7 +15,7 @@ import { ReportExporter } from './report-exporter';
 @Module({
   imports: [MarketingModule, TypeOrmModule.forFeature([AttributionCredit])],
   controllers: [DashboardController],
-  providers: [DashboardService, ReportExporter],
+  providers: [DashboardService, ReportExporter, FilterParserService],
   exports: [DashboardService],
 })
 export class DashboardModule {}

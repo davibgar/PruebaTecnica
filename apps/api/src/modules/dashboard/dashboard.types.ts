@@ -2,13 +2,17 @@ import { AudienceOrigin } from '../../common/enums/audience-origin.enum';
 
 /** Seis métricas core del dashboard de entrada (valores blended). */
 export interface DashboardMetrics {
-  attributedRevenue: number; // ingreso real atribuido (POS)
-  totalSpend: number; // inversión total
-  roasReal: number; // ingreso atribuido ÷ inversión
-  roasPlatform: number; // ingreso reportado por plataforma ÷ inversión
-  conversions: number; // nº de ventas atribuidas
-  averageTicket: number; // ingreso atribuido ÷ conversiones
-  attributionWindowDays: number; // ventana con la que se calcularon los créditos
+  /** Ingreso real atribuido (POS). */
+  attributedRevenue: number;
+  totalSpend: number;
+  /** Ingreso atribuido ÷ inversión. */
+  roasReal: number;
+  /** Ingreso reportado por plataforma ÷ inversión. */
+  roasPlatform: number;
+  conversions: number;
+  /** Ingreso atribuido ÷ conversiones. */
+  averageTicket: number;
+  attributionWindowDays: number;
 }
 
 /** Fila por campaña: alimenta la tabla y los dos gráficos del dashboard. */
@@ -48,6 +52,21 @@ export interface CampaignDrilldown {
   campaign: CampaignReportRow;
   touchpoints: DrilldownTouchpoint[];
   attributedSales: DrilldownSale[];
+}
+
+/** Filtros del dashboard inferidos desde texto natural (modo conversacional). */
+export interface ParsedFilters {
+  filters: {
+    from?: string;
+    to?: string;
+    campaignId?: string;
+    audienceOrigin?: string;
+    model?: string;
+  };
+  /** Qué entendió el parser (legible para la UI). */
+  recognized: string[];
+  /** Términos que no se reconocieron. */
+  unrecognized: string[];
 }
 
 /** ROAS real por origen de audiencia (insight 7.2), con gasto prorrateado. */

@@ -1,8 +1,11 @@
 import {
+  Body,
   Controller,
   Get,
+  HttpCode,
   Param,
   ParseUUIDPipe,
+  Post,
   Query,
   Res,
 } from '@nestjs/common';
@@ -10,13 +13,16 @@ import type { Response } from 'express';
 import { BusinessId } from '../../common/decorators/business-id.decorator';
 import { ReportFilterDto } from '../../common/dto/report-filter.dto';
 import { DashboardService } from './dashboard.service';
+import { FilterParserService } from './filter-parser.service';
 import { ExportReportDto } from './dto/export-report.dto';
+import { ParseFiltersDto } from './dto/parse-filters.dto';
 import { ReportExporter } from './report-exporter';
 import {
   AudienceOriginPerformance,
   CampaignDrilldown,
   CampaignReportRow,
   DashboardMetrics,
+  ParsedFilters,
 } from './dashboard.types';
 
 @Controller('dashboard')
@@ -24,6 +30,7 @@ export class DashboardController {
   constructor(
     private readonly dashboard: DashboardService,
     private readonly exporter: ReportExporter,
+    private readonly filterParser: FilterParserService,
   ) {}
 
   /** Seis métricas core del dashboard de entrada. */
@@ -87,5 +94,15 @@ export class DashboardController {
         'Content-Disposition': 'attachment; filename="reporte-campanas.csv"',
       })
       .send(this.exporter.toCsv(rows));
+  }
+
+  /** Modo conversacional: convierte texto natural en filtros del dashboard. */
+  @Post('parse-filters')
+  @HttpCode(200)
+  parseFilters(
+    @BusinessId() businessId: string,
+    @Body() dto: ParseFiltersDto,
+  ): Promise<ParsedFilters> {
+    return this.filterParser.parse(businessId, dto.text);
   }
 }
