@@ -1,6 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, SelectQueryBuilder } from 'typeorm';
+import { AppConfig } from '../../config/app.config';
 import { ReportFilterDto } from '../../common/dto/report-filter.dto';
 import { AttributionModel } from '../../common/enums/attribution-model.enum';
 import { AudienceOrigin } from '../../common/enums/audience-origin.enum';
@@ -39,6 +41,7 @@ export class DashboardService {
     private readonly campaigns: Repository<Campaign>,
     @InjectRepository(Touchpoint)
     private readonly touchpoints: Repository<Touchpoint>,
+    private readonly config: ConfigService,
   ) {}
 
   async getMetrics(
@@ -63,11 +66,13 @@ export class DashboardService {
     const creditQb = this.credits
       .createQueryBuilder('cr')
       .select('COALESCE(SUM(cr.creditAmount), 0)', 'attributed')
-      .addSelect('COUNT(DISTINCT cr.saleId)', 'conversions');
+      .addSelect('COUNT(DISTINCT cr.saleId)', 'conversions')
+      .addSelect('MAX(cr.attributionWindowDays)', 'window');
     this.applyCreditFilters(creditQb, filter, businessId);
     const creditRow = await creditQb.getRawOne<{
       attributed: string;
       conversions: string;
+      window: string | null;
     }>();
 
     const spend = Number(spendRow?.spend ?? 0);
@@ -82,6 +87,9 @@ export class DashboardService {
       roasPlatform: ratio(platform, spend),
       conversions,
       averageTicket: ratio(attributed, conversions),
+      attributionWindowDays:
+        Number(creditRow?.window) ||
+        this.config.get<AppConfig['attribution']>('attribution')!.windowDays,
     };
   }
 

@@ -8,6 +8,7 @@ export interface DashboardMetrics {
   roasPlatform: number; // ingreso reportado por plataforma ÷ inversión
   conversions: number; // nº de ventas atribuidas
   averageTicket: number; // ingreso atribuido ÷ conversiones
+  attributionWindowDays: number; // ventana con la que se calcularon los créditos
 }
 
 /** Fila por campaña: alimenta la tabla y los dos gráficos del dashboard. */
