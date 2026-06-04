@@ -1,0 +1,23 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: nodotech_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: nodotech
+      POSTGRES_PASSWORD: nodotech
+      POSTGRES_DB: nodotech_marketing
+    ports:
+      # Puerto del host configurable (default 5432). Útil si ya tienes un
+      # PostgreSQL local ocupando el 5432: exporta POSTGRES_HOST_PORT=5433.
+      - '${POSTGRES_HOST_PORT:-5432}:5432'
+    volumes:
+      - nodotech_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U nodotech -d nodotech_marketing']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  nodotech_pgdata:
