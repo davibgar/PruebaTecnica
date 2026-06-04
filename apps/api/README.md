@@ -21,6 +21,12 @@ docker compose up -d --build
 
 - **API:** http://localhost:3001/api
 
+Carga los datos de demostración (seed):
+
+```bash
+docker compose exec api npm run seed
+```
+
 La API arranca aplicando las migraciones (no usa `synchronize`) y queda en modo
 **watch**: el código de `apps/api/src` se monta en el contenedor, así que editar
 en tu host recompila dentro del contenedor automáticamente. Dentro de la red de
@@ -42,10 +48,12 @@ cp .env.example .env          # ajusta DB_PORT si cambiaste POSTGRES_HOST_PORT
 docker compose up -d postgres
 npm install
 npm run migration:run         # aplica migraciones (NO se usa synchronize)
+npm run seed                  # carga datos de demostración
 npm run start:dev             # http://localhost:3001/api
 ```
 
 > Todo endpoint exige el header **`x-business-id`** (aislamiento multi-tenant).
+> El negocio demo del seed es `11111111-1111-1111-1111-111111111111`.
 
 ### Scripts útiles
 | Script | Qué hace |
@@ -55,6 +63,7 @@ npm run start:dev             # http://localhost:3001/api
 | `npm run migration:generate -- src/database/migrations/<Nombre>` | Genera migración desde las entidades |
 | `npm run migration:run` | Aplica migraciones pendientes |
 | `npm run migration:revert` | Revierte la última |
+| `npm run seed` | Carga datos de demostración y recalcula la atribución |
 | `npm test` | Tests unitarios |
 
 ---
