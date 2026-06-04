@@ -199,8 +199,15 @@ desconocido, etc.) y Nest responde con los códigos HTTP correctos (400/404/…)
 
 ## 3. Endpoints
 
+Filtros comunes del dashboard (query params): `from`, `to`, `campaignId`,
+`audienceOrigin`, `model` (default `linear`).
+
 | Verbo | Ruta | Descripción |
 |---|---|---|
 | `POST` | `/api/attribution/recompute?window=<días>` | Recalcula los créditos de los 3 modelos. |
+| `GET` | `/api/dashboard/metrics` | Seis métricas core (blended). |
+| `GET` | `/api/dashboard/campaigns` | Filas por campaña: ROAS real vs plataforma, diferencia %, flag. |
+| `GET` | `/api/dashboard/campaigns/:id` | Drill-down: touchpoints y ventas atribuidas. |
+| `GET` | `/api/dashboard/audience-performance` | ROAS real por origen de audiencia (gasto prorrateado). |
 
-> Se ampliará con los endpoints de `dashboard` y `action-center` en sus fases.
+> Se ampliará con los endpoints del `action-center` en su fase.

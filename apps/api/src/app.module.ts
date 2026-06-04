@@ -7,6 +7,7 @@ import { buildDataSourceOptions } from './config/database.config';
 import { BusinessGuard } from './common/guards/business.guard';
 import { MarketingModule } from './modules/marketing/marketing.module';
 import { AttributionModule } from './modules/attribution/attribution.module';
+import { DashboardModule } from './modules/dashboard/dashboard.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { AttributionModule } from './modules/attribution/attribution.module';
     }),
     MarketingModule,
     AttributionModule,
+    DashboardModule,
   ],
   // Guard multi-tenant aplicado de forma global.
   providers: [{ provide: APP_GUARD, useClass: BusinessGuard }],
