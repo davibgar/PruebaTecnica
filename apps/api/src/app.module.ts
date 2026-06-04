@@ -8,6 +8,7 @@ import { BusinessGuard } from './common/guards/business.guard';
 import { MarketingModule } from './modules/marketing/marketing.module';
 import { AttributionModule } from './modules/attribution/attribution.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
+import { ActionCenterModule } from './modules/action-center/action-center.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { DashboardModule } from './modules/dashboard/dashboard.module';
     MarketingModule,
     AttributionModule,
     DashboardModule,
+    ActionCenterModule,
   ],
   // Guard multi-tenant aplicado de forma global.
   providers: [{ provide: APP_GUARD, useClass: BusinessGuard }],

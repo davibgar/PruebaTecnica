@@ -209,5 +209,9 @@ Filtros comunes del dashboard (query params): `from`, `to`, `campaignId`,
 | `GET` | `/api/dashboard/campaigns` | Filas por campaña: ROAS real vs plataforma, diferencia %, flag. |
 | `GET` | `/api/dashboard/campaigns/:id` | Drill-down: touchpoints y ventas atribuidas. |
 | `GET` | `/api/dashboard/audience-performance` | ROAS real por origen de audiencia (gasto prorrateado). |
-
-> Se ampliará con los endpoints del `action-center` en su fase.
+| `GET` | `/api/action-center/recommendations` | Recomendaciones pendientes. |
+| `POST` | `/api/action-center/recommendations/generate` | (Re)evalúa las reglas (upsert por `ruleKey`). |
+| `POST` | `/api/action-center/recommendations/:id/accept` | Acepta → crea una task (201). |
+| `PATCH` | `/api/action-center/recommendations/:id/dismiss` | Descarta la recomendación. |
+| `GET` | `/api/action-center/tasks` | Tasks aceptadas. |
+| `PATCH` | `/api/action-center/tasks/:id/complete` | Marca la task como hecha. |

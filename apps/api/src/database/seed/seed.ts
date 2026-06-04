@@ -2,12 +2,15 @@ import { NestFactory } from '@nestjs/core';
 import { DataSource, EntityManager } from 'typeorm';
 import { AppModule } from '../../app.module';
 import { AttributionService } from '../../modules/attribution/attribution.service';
+import { ActionCenterService } from '../../modules/action-center/action-center.service';
 import { AttributionModel } from '../../common/enums/attribution-model.enum';
 import { AttributionCredit } from '../../modules/attribution/entities/attribution-credit.entity';
 import { Campaign } from '../../modules/marketing/entities/campaign.entity';
 import { Contact } from '../../modules/marketing/entities/contact.entity';
 import { Sale } from '../../modules/marketing/entities/sale.entity';
 import { Touchpoint } from '../../modules/marketing/entities/touchpoint.entity';
+import { Recommendation } from '../../modules/action-center/entities/recommendation.entity';
+import { Task } from '../../modules/action-center/entities/task.entity';
 import { buildSeedData, DEMO_BUSINESS_ID } from './seed-data';
 
 /**
@@ -24,10 +27,13 @@ async function bootstrap(): Promise<void> {
   try {
     const dataSource = app.get(DataSource);
     const attribution = app.get(AttributionService);
+    const actionCenter = app.get(ActionCenterService);
     const data = buildSeedData(new Date());
 
     await dataSource.transaction(async (em: EntityManager) => {
       // Borrado idempotente, en orden seguro de claves foráneas.
+      await em.delete(Task, { businessId: DEMO_BUSINESS_ID });
+      await em.delete(Recommendation, { businessId: DEMO_BUSINESS_ID });
       await em.delete(AttributionCredit, { businessId: DEMO_BUSINESS_ID });
       await em.delete(Touchpoint, { businessId: DEMO_BUSINESS_ID });
       await em.delete(Sale, { businessId: DEMO_BUSINESS_ID });
@@ -50,6 +56,11 @@ async function bootstrap(): Promise<void> {
     console.log(
       `Atribución recalculada (ventana ${result.attributionWindowDays}d): ` +
         `${result.attributedSales}/${result.sales} ventas atribuidas, ${result.creditsCreated} créditos`,
+    );
+
+    const recs = await actionCenter.generate(DEMO_BUSINESS_ID);
+    console.log(
+      `Action Center: ${recs.created} recomendaciones nuevas, ${recs.pending} pendientes`,
     );
 
     await printSummary(dataSource);
