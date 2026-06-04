@@ -1,13 +1,9 @@
-/**
- * Origen de la audiencia de un touchpoint. Es el eje que permite el insight del
- * bloque 7.2: qué origen rinde mejor por ROAS real.
- *
- * - `COLD`  (frías)       — públicos nuevos (geo/demo/intereses).
- * - `WARM`  (warm)        — engagement previo con activos propios.
- * - `OWNED` (base_propia) — base transaccional propia (ERP/CRM).
- */
+/** Origen de la audiencia de un touchpoint (eje del insight de ROAS por origen). */
 export enum AudienceOrigin {
+  /** Públicos nuevos (geo/demo/intereses). */
   COLD = 'fria',
+  /** Engagement previo con activos propios. */
   WARM = 'warm',
+  /** Base transaccional propia (ERP/CRM). */
   OWNED = 'base_propia',
 }

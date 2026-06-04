@@ -10,11 +10,8 @@ import { TimeDecayStrategy } from './strategies/time-decay.strategy';
 import { PositionBasedStrategy } from './strategies/position-based.strategy';
 
 /**
- * Módulo de atribución multi-touch. Reúne las estrategias (patrón Strategy), el
- * factory que las resuelve y el servicio que orquesta el recálculo. Importa
- * MarketingModule para inyectar los repositorios de Touchpoint y Sale.
- *
- * Exporta el servicio y el factory para que el dashboard pueda consumirlos.
+ * Atribución multi-touch: estrategias (Strategy), su factory y el servicio de
+ * recálculo. Importa MarketingModule por los repositorios de Touchpoint y Sale.
  */
 @Module({
   imports: [TypeOrmModule.forFeature([AttributionCredit]), MarketingModule],

@@ -10,14 +10,9 @@ import { AttributionModule } from './modules/attribution/attribution.module';
 
 @Module({
   imports: [
-    // Configuración global tipada, disponible vía ConfigService en toda la app.
-    ConfigModule.forRoot({
-      isGlobal: true,
-      load: [configuration],
-    }),
-    // Conexión a PostgreSQL reutilizando las opciones del DataSource (fuente
-    // única). `autoLoadEntities` registra automáticamente las entidades que
-    // cada módulo declara con `forFeature`, sin mantener una lista manual.
+    ConfigModule.forRoot({ isGlobal: true, load: [configuration] }),
+    // Reutiliza las opciones del DataSource (fuente única) y registra las
+    // entidades que cada módulo declara con `forFeature`.
     TypeOrmModule.forRoot({
       ...buildDataSourceOptions(),
       autoLoadEntities: true,
@@ -25,9 +20,7 @@ import { AttributionModule } from './modules/attribution/attribution.module';
     MarketingModule,
     AttributionModule,
   ],
-  providers: [
-    // Multi-tenant: el guard se aplica de forma global a todos los endpoints.
-    { provide: APP_GUARD, useClass: BusinessGuard },
-  ],
+  // Guard multi-tenant aplicado de forma global.
+  providers: [{ provide: APP_GUARD, useClass: BusinessGuard }],
 })
 export class AppModule {}

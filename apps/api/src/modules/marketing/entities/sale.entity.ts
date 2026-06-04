@@ -3,10 +3,7 @@ import { TenantEntity } from '../../../common/entities/tenant.entity';
 import { numericTransformer } from '../../../common/database/numeric.transformer';
 import { Contact } from './contact.entity';
 
-/**
- * Venta real registrada por el POS. Es la conversión que la atribución reparte
- * entre los touchpoints previos del contacto.
- */
+/** Venta real del POS: la conversión que la atribución reparte entre el path. */
 @Entity('sales')
 @Index('idx_sale_contact', ['businessId', 'contactId', 'soldAt'])
 export class Sale extends TenantEntity {

@@ -3,9 +3,8 @@ import { TenantEntity } from '../../../common/entities/tenant.entity';
 import { numericTransformer } from '../../../common/database/numeric.transformer';
 
 /**
- * Campaña de marketing con su inversión y el ingreso que reporta la plataforma
- * (el "píxel"). El ingreso REAL atribuido no se guarda aquí: se calcula cruzando
- * con las ventas POS vía atribución multi-touch.
+ * Campaña con su inversión y el ingreso que reporta la plataforma (el "píxel").
+ * El ingreso REAL atribuido no se guarda aquí: se calcula cruzando con ventas.
  */
 @Entity('campaigns')
 @Index('idx_campaign_business', ['businessId'])
@@ -28,7 +27,7 @@ export class Campaign extends TenantEntity {
   })
   adSpend: number;
 
-  /** Ingreso reportado por la plataforma de ads (lo que diría el píxel de Meta). */
+  /** Ingreso reportado por la plataforma de ads (píxel de Meta). */
   @Column({
     type: 'numeric',
     precision: 14,

@@ -8,20 +8,18 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const config = app.get(ConfigService);
 
-  // Prefijo común para toda la API.
   app.setGlobalPrefix('api');
 
-  // Validación automática de todos los DTOs entrantes.
+  // Valida y tipa todos los DTOs entrantes; rechaza propiedades no declaradas.
   app.useGlobalPipes(
     new ValidationPipe({
-      whitelist: true, // descarta propiedades no declaradas en el DTO
-      forbidNonWhitelisted: true, // y rechaza la petición si las trae
-      transform: true, // convierte payloads a las clases/tipos del DTO
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
       transformOptions: { enableImplicitConversion: true },
     }),
   );
 
-  // CORS para el frontend Next.js.
   app.enableCors({
     origin: config.get<AppConfig['corsOrigin']>('corsOrigin'),
   });

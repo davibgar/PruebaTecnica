@@ -2,11 +2,8 @@ import { Column, Entity, Unique } from 'typeorm';
 import { TenantEntity } from '../../../common/entities/tenant.entity';
 
 /**
- * Contacto con identidad única dentro de un negocio. Un contacto puede tener
- * varios touchpoints en distintos canales y varias ventas POS.
- *
- * La restricción única (businessId, externalId) ya provee un índice que lidera
- * con businessId, así que no se añade otro índice sobre businessId.
+ * Contacto con identidad única dentro de un negocio. El unique
+ * (businessId, externalId) ya provee índice que lidera con businessId.
  */
 @Entity('contacts')
 @Unique('uq_contact_business_external', ['businessId', 'externalId'])

@@ -1,14 +1,10 @@
 import { DataSourceOptions } from 'typeorm';
 
 /**
- * Opciones de conexión a PostgreSQL.
+ * Opciones de conexión a PostgreSQL. Fuente única: las consumen el
+ * `TypeOrmModule` de Nest (runtime) y el `DataSource` del CLI (migrations).
  *
- * Fuente ÚNICA de la verdad de la configuración de BD: la consumen tanto el
- * `TypeOrmModule` de Nest (en runtime) como el `DataSource` del CLI de TypeORM
- * (para generar y correr migrations). Así no se duplica la config en dos sitios.
- *
- * `synchronize` queda SIEMPRE en `false`: el esquema se levanta únicamente
- * corriendo migrations, tal como exige el enunciado.
+ * `synchronize` siempre en `false`: el esquema se levanta solo con migrations.
  */
 export function buildDataSourceOptions(): DataSourceOptions {
   return {

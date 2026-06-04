@@ -7,10 +7,7 @@ import { RecomputeDto } from './dto/recompute.dto';
 export class AttributionController {
   constructor(private readonly attribution: AttributionService) {}
 
-  /**
-   * Recalcula los créditos de atribución del negocio para los tres modelos.
-   * Comando idempotente: reemplaza el resultado anterior.
-   */
+  /** Recalcula los créditos de los tres modelos. Idempotente: reemplaza el anterior. */
   @Post('recompute')
   @HttpCode(200)
   recompute(

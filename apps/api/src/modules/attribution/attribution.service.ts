@@ -21,16 +21,11 @@ export interface RecomputeResult {
 }
 
 /**
- * Orquesta el cálculo de atribución multi-touch.
+ * Orquesta la atribución multi-touch: por cada venta reconstruye el path de
+ * touchpoints previos dentro de la ventana, delega el reparto a CADA estrategia
+ * y persiste los créditos (precalculados para los tres modelos).
  *
- * Por cada venta reconstruye el path de touchpoints del contacto anteriores a la
- * conversión dentro de la ventana, delega el reparto a CADA estrategia y persiste
- * los créditos en `attribution_credits` (precalculado para los tres modelos, de
- * modo que conmutar el modelo en el dashboard sea instantáneo).
- *
- * Eficiencia: carga touchpoints y ventas en dos consultas y agrupa en memoria por
- * contacto, evitando N+1. El reparto por path se hace en servicio (permitido); las
- * agregaciones de reporte se resuelven luego en SQL sobre la tabla resultante.
+ * Carga touchpoints y ventas en dos consultas y agrupa en memoria (sin N+1).
  */
 @Injectable()
 export class AttributionService {
@@ -74,7 +69,7 @@ export class AttributionService {
         windowMs,
       );
       if (path.length === 0) {
-        continue; // venta sin touchpoints en ventana: real, pero no atribuible
+        continue; // venta real, pero sin touchpoints en ventana: no atribuible
       }
       attributedSales += 1;
 
@@ -125,8 +120,8 @@ export class AttributionService {
 
   /**
    * Touchpoints del contacto anteriores a la venta y dentro de la ventana.
-   * La lista de entrada ya viene ordenada ascendentemente por fecha, así que el
-   * path conserva ese orden (necesario para position-based y time-decay).
+   * La entrada ya viene ordenada por fecha, así que el path conserva ese orden
+   * (necesario para position-based y time-decay).
    */
   private buildPath(
     contactTouchpoints: Touchpoint[],

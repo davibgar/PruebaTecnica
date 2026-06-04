@@ -9,16 +9,11 @@ export interface CreditAllocation {
 }
 
 /**
- * Contrato de un modelo de atribución (patrón Strategy). Dado el path de
- * touchpoints previos a una venta (ordenados ascendentemente por fecha) y la
- * venta, reparte el monto entre los touchpoints.
- *
- * Invariante que toda estrategia debe cumplir: la suma de los créditos
- * devueltos es igual al monto de la venta (se garantiza en BaseAttributionStrategy).
+ * Contrato de un modelo de atribución (Strategy): dado el path (ordenado
+ * ascendente por fecha) y la venta, reparte el monto entre los touchpoints.
+ * Invariante (garantizado en BaseAttributionStrategy): Σ créditos == monto.
  */
 export interface AttributionStrategy {
-  /** Modelo que implementa esta estrategia (clave para el factory). */
   readonly model: AttributionModel;
-
   assign(path: Touchpoint[], sale: Sale): CreditAllocation[];
 }

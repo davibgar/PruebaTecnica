@@ -10,15 +10,9 @@ import { Request } from 'express';
 export const BUSINESS_ID_HEADER = 'x-business-id';
 
 /**
- * Guard de aislamiento multi-tenant.
- *
- * Exige el header `x-business-id` en toda petición y lo deja disponible en
- * `request.businessId`. El decorador `@BusinessId()` lo lee desde ahí, de modo
- * que cada servicio filtra siempre por el negocio del header y ningún endpoint
- * puede devolver datos de otro negocio.
- *
- * Decisión documentada: el tenant viaja por header (no por usuario autenticado)
- * para mantener la prueba enfocada en el dominio, sin una capa de auth real.
+ * Aislamiento multi-tenant: exige `x-business-id` en toda petición y lo deja en
+ * `request.businessId` (lo lee el decorador `@BusinessId()`). El tenant viaja
+ * por header, no por usuario autenticado, para no añadir una capa de auth real.
  */
 @Injectable()
 export class BusinessGuard implements CanActivate {

@@ -6,9 +6,8 @@ import { TimeDecayStrategy } from './strategies/time-decay.strategy';
 import { PositionBasedStrategy } from './strategies/position-based.strategy';
 
 /**
- * Resuelve la estrategia de atribución a partir del enum del modelo. Centraliza
- * el mapeo modelo → estrategia para que ningún servicio tenga `if/else` por
- * modelo: añadir un modelo nuevo es registrar una estrategia más aquí (OCP).
+ * Resuelve la estrategia a partir del enum del modelo. Añadir un modelo nuevo es
+ * registrar una estrategia más aquí, sin if/else en los servicios (OCP).
  */
 @Injectable()
 export class AttributionStrategyFactory {
@@ -32,7 +31,6 @@ export class AttributionStrategyFactory {
     return strategy;
   }
 
-  /** Todas las estrategias registradas (usado por el recompute de todos los modelos). */
   getAll(): AttributionStrategy[] {
     return [...this.registry.values()];
   }

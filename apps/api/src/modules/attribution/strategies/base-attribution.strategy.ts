@@ -7,21 +7,15 @@ import {
 } from './attribution-strategy.interface';
 
 /**
- * Base de las estrategias de atribución (patrón Template Method).
- *
- * Aquí vive, escrita UNA sola vez, la parte común a todos los modelos: tomar un
- * vector de pesos y normalizarlo al monto de la venta. Cada modelo concreto solo
- * implementa `computeWeights` (el "cómo pesar"); el reparto y la garantía de que
- * la suma de créditos == monto exacto se resuelven aquí.
- *
- * El cuadre exacto se hace en centavos: todos los touchpoints salvo el último se
- * redondean, y el último recibe el remanente. Así nunca se pierde ni se inventa
- * un centavo por redondeo.
+ * Base de las estrategias (Template Method). Escribe una vez la normalización
+ * peso→crédito; cada modelo solo aporta `computeWeights`. El cuadre se hace en
+ * centavos (el último touchpoint recibe el remanente) para no perder ni inventar
+ * un centavo: Σ créditos == monto exacto.
  */
 export abstract class BaseAttributionStrategy implements AttributionStrategy {
   abstract readonly model: AttributionModel;
 
-  /** Peso de cada touchpoint del path (mismo orden y longitud que `path`). */
+  /** Peso de cada touchpoint (mismo orden y longitud que `path`). */
   protected abstract computeWeights(path: Touchpoint[], sale: Sale): number[];
 
   assign(path: Touchpoint[], sale: Sale): CreditAllocation[] {
@@ -32,7 +26,7 @@ export abstract class BaseAttributionStrategy implements AttributionStrategy {
     const weights = this.computeWeights(path, sale);
     const totalWeight = weights.reduce((sum, w) => sum + w, 0);
 
-    // Salvaguarda: pesos degenerados (suma 0) → reparto equitativo.
+    // Pesos degenerados (suma 0) → reparto equitativo.
     const safeWeights = totalWeight > 0 ? weights : path.map(() => 1);
     const safeTotal = totalWeight > 0 ? totalWeight : safeWeights.length;
 
@@ -42,7 +36,7 @@ export abstract class BaseAttributionStrategy implements AttributionStrategy {
     return path.map((touchpoint, i) => {
       const isLast = i === path.length - 1;
       const cents = isLast
-        ? amountCents - assignedCents // remanente → la suma cuadra exacto
+        ? amountCents - assignedCents
         : Math.round((amountCents * safeWeights[i]) / safeTotal);
       if (!isLast) {
         assignedCents += cents;

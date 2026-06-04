@@ -9,14 +9,8 @@ import { BaseAttributionStrategy } from './base-attribution.strategy';
 const MS_PER_DAY = 1000 * 60 * 60 * 24;
 
 /**
- * Modelo time-decay: más crédito a los touchpoints más cercanos a la conversión,
- * con decaimiento exponencial.
- *
- *   peso(t) = 2 ^ (-Δdías / halfLife)
- *
- * donde Δdías es la distancia del touchpoint a la venta. Con cada `halfLife`
- * días de antigüedad el peso se reduce a la mitad. El half-life es configurable
- * (`ATTRIBUTION_HALF_LIFE_DAYS`, por defecto 7 días).
+ * Time-decay: peso(t) = 2^(-Δdías / halfLife). Cada `halfLife` días de
+ * antigüedad el peso se reduce a la mitad. Half-life configurable (default 7).
  */
 @Injectable()
 export class TimeDecayStrategy extends BaseAttributionStrategy {

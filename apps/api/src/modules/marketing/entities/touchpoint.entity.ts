@@ -6,10 +6,8 @@ import { Contact } from './contact.entity';
 import { Campaign } from './campaign.entity';
 
 /**
- * Punto de contacto de marketing: un contacto interactuó con un canal en una
- * fecha. Es la pieza con la que se reconstruye el path previo a cada venta.
- *
- * El índice (businessId, contactId, occurredAt) sirve justo a esa reconstrucción.
+ * Punto de contacto con el que se reconstruye el path previo a cada venta.
+ * El índice (businessId, contactId, occurredAt) sirve a esa reconstrucción.
  */
 @Entity('touchpoints')
 @Index('idx_touchpoint_path', ['businessId', 'contactId', 'occurredAt'])
@@ -21,7 +19,7 @@ export class Touchpoint extends TenantEntity {
   @JoinColumn({ name: 'contactId' })
   contact: Contact;
 
-  /** Campaña asociada. Null en touchpoints orgánicos sin campaña. */
+  /** Null en touchpoints orgánicos sin campaña. */
   @Column({ type: 'uuid', nullable: true })
   campaignId: string | null;
 

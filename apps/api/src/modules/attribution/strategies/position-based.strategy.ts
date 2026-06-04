@@ -3,17 +3,12 @@ import { AttributionModel } from '../../../common/enums/attribution-model.enum';
 import { Touchpoint } from '../../marketing/entities/touchpoint.entity';
 import { BaseAttributionStrategy } from './base-attribution.strategy';
 
-const FIRST_LAST_WEIGHT = 0.4; // 40% al primero y 40% al último
-const MIDDLE_TOTAL_WEIGHT = 0.2; // 20% repartido entre los intermedios
+const FIRST_LAST_WEIGHT = 0.4;
+const MIDDLE_TOTAL_WEIGHT = 0.2;
 
 /**
- * Modelo position-based (U-shaped): 40% al primer touchpoint, 40% al último y
- * 20% repartido por igual entre los intermedios.
- *
- * Casos borde documentados:
- * - 1 touchpoint  → recibe el 100%.
- * - 2 touchpoints → 50% / 50% (no hay intermedios; el 20% se reabsorbe en
- *   primero y último a partes iguales).
+ * Position-based (U): 40% al primero, 40% al último, 20% entre los intermedios.
+ * Bordes: N=1 → 100%; N=2 → 50/50 (el 20% se reabsorbe en primero y último).
  */
 @Injectable()
 export class PositionBasedStrategy extends BaseAttributionStrategy {

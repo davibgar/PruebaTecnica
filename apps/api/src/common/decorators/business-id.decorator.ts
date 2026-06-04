@@ -1,12 +1,7 @@
 import { createParamDecorator, ExecutionContext } from '@nestjs/common';
 import { Request } from 'express';
 
-/**
- * Inyecta el `businessId` del tenant (puesto por `BusinessGuard`) en un
- * parámetro del controller:
- *
- *   list(@BusinessId() businessId: string) { ... }
- */
+/** Inyecta el `businessId` del tenant (puesto por `BusinessGuard`). */
 export const BusinessId = createParamDecorator(
   (_data: unknown, ctx: ExecutionContext): string => {
     const request = ctx

@@ -1,10 +1,6 @@
 /**
- * Configuración de aplicación tipada (fuente única de la verdad para las
- * variables de entorno no relacionadas con la conexión a BD).
- *
- * La config de la base de datos vive en `database.config.ts` porque la
- * comparten dos consumidores: el `TypeOrmModule` de Nest y el `DataSource` del
- * CLI de migrations.
+ * Config de aplicación tipada (todo lo que no es conexión a BD; esa vive en
+ * `database.config.ts` por tener dos consumidores).
  */
 export interface AppConfig {
   port: number;
