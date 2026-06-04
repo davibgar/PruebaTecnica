@@ -2,6 +2,7 @@
 
 import { FilterBar } from "../filters/filter-bar";
 import { FiltersProvider } from "../filters/filters-context";
+import { DashboardCharts } from "./charts";
 import { MetricsCards } from "./metrics-cards";
 
 /**
@@ -25,6 +26,7 @@ export function DashboardPage() {
         <div className="space-y-6">
           <FilterBar />
           <MetricsCards />
+          <DashboardCharts />
         </div>
       </div>
     </FiltersProvider>
