@@ -5,6 +5,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import configuration from './config/app.config';
 import { buildDataSourceOptions } from './config/database.config';
 import { BusinessGuard } from './common/guards/business.guard';
+import { MarketingModule } from './modules/marketing/marketing.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { BusinessGuard } from './common/guards/business.guard';
       ...buildDataSourceOptions(),
       autoLoadEntities: true,
     }),
+    MarketingModule,
   ],
   providers: [
     // Multi-tenant: el guard se aplica de forma global a todos los endpoints.
