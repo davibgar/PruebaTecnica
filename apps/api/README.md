@@ -103,21 +103,30 @@ src/
 │  ├─ decorators/business-id.decorator.ts   @BusinessId()
 │  └─ dto/report-filter.dto.ts  Filtros compartidos del dashboard (fuente única)
 │
-├─ database/migrations/         Migraciones de TypeORM (esquema versionado)
+├─ database/
+│  ├─ migrations/               Migraciones de TypeORM (esquema versionado)
+│  └─ seed/                     Datos sintéticos deterministas (seed-data + runner)
 │
 └─ modules/
    ├─ marketing/                Entidades núcleo (sin controller: se cargan por seed)
    │  └─ entities/  contact · campaign · touchpoint · sale
-   └─ attribution/              Atribución multi-touch (núcleo técnico)
-      ├─ strategies/            Patrón Strategy + Template Method
-      ├─ attribution-strategy.factory.ts
-      ├─ entities/attribution-credit.entity.ts
-      ├─ attribution.service.ts
-      └─ attribution.controller.ts
+   ├─ attribution/              Atribución multi-touch (núcleo técnico)
+   │  ├─ strategies/            Patrón Strategy + Template Method (+ spec del invariante)
+   │  ├─ attribution-strategy.factory.ts
+   │  ├─ entities/attribution-credit.entity.ts
+   │  ├─ attribution.service.ts
+   │  └─ attribution.controller.ts
+   ├─ dashboard/                Reportes, métricas, drill-down, export y parser conversacional
+   │  ├─ dashboard.service.ts   Agregaciones en SQL (QueryBuilder)
+   │  ├─ filter-parser.service.ts   Texto natural → filtros (parser de reglas)
+   │  ├─ report-exporter.ts     CSV / PDF para stakeholders
+   │  └─ dashboard.controller.ts
+   └─ action-center/            Reglas → recomendaciones → tasks accionables
+      ├─ rules/                 roas-below-one · best-audience-origin · reconciliation-gap
+      ├─ entities/  recommendation · task
+      ├─ action-center.service.ts
+      └─ action-center.controller.ts
 ```
-
-> Los módulos `dashboard` y `action-center` se añaden en sus fases siguientes; la
-> base ya deja el terreno preparado (entidades, créditos precalculados, filtros).
 
 ### 2.3 Multi-tenant (aislamiento por `business_id`)
 
@@ -152,7 +161,7 @@ Es el corazón del backend y el lugar donde los patrones se justifican.
 (`AttributionStrategy.assign(path, sale)`). Conmutar el modelo desde la UI = usar
 otra estrategia, sin `if/else` regados por el código.
 
-**Template Method** — `BaseWeightedStrategy` escribe **una sola vez** la parte
+**Template Method** — `BaseAttributionStrategy` escribe **una sola vez** la parte
 común: convertir un vector de pesos en crédito (`crédito_i = monto · wᵢ/Σw`) y
 garantizar que **la suma de créditos == monto de la venta** (cuadre exacto en
 centavos: el último touchpoint recibe el remanente). Cada modelo concreto solo
@@ -194,6 +203,28 @@ solo con migrations.
 `ValidationPipe` global con `whitelist` + `forbidNonWhitelisted` + `transform`:
 los DTOs (`class-validator`) validan y tipan toda entrada (rango de fechas, modelo
 desconocido, etc.) y Nest responde con los códigos HTTP correctos (400/404/…).
+
+### 2.8 Supuestos y limitaciones
+
+- **Inversión sin dimensión temporal ni de origen.** `adSpend` y
+  `platformReportedRevenue` son **totales por campaña** (el seed no modela gasto
+  diario ni por origen de audiencia). Por eso los filtros de **fecha** y de
+  **origen** afectan el ingreso atribuido (POS), pero **no** recortan la
+  inversión: al filtrar por un rango corto o por un solo origen, el `roasReal`
+  blended de `/dashboard/metrics` queda subestimado. La vista
+  `/dashboard/audience-performance` sí reparte el gasto entre orígenes de forma
+  heurística (prorrateo por cuota de crédito) para dar un ROAS real por origen
+  comparable. Llevar ese mismo prorrateo a las métricas blended queda como
+  siguiente iteración.
+- **Ventana de atribución.** Se aplica al **recalcular** (`/attribution/recompute?window=`),
+  no como filtro vivo del dashboard: los tres modelos se precalculan con la
+  ventana vigente y se persisten. Cambiar la ventana = un recompute (rápido e
+  idempotente), no un recálculo por petición.
+- **Conmutar de modelo es instantáneo** porque los tres modelos se precalculan en
+  `attribution_credits`; el dashboard solo cambia el `WHERE model = :model`.
+- **Tenant por header.** `x-business-id` se exige pero no se valida como UUID; un
+  valor malformado lo rechaza Postgres. En un entorno real el `businessId`
+  vendría del usuario autenticado.
 
 ---
 
