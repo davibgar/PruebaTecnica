@@ -2,6 +2,7 @@
 
 import { FilterBar } from "../filters/filter-bar";
 import { FiltersProvider } from "../filters/filters-context";
+import { ActionCenter } from "../action-center/action-center";
 import { AudiencePerformance } from "./audience-performance";
 import { CampaignTable } from "./campaign-table";
 import { DashboardCharts } from "./charts";
@@ -31,6 +32,7 @@ export function DashboardPage() {
           <DashboardCharts />
           <CampaignTable />
           <AudiencePerformance />
+          <ActionCenter />
         </div>
       </div>
     </FiltersProvider>
