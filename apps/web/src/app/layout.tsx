@@ -32,7 +32,7 @@ export default function RootLayout({
         <Providers>{children}</Providers>
         <Toaster
           theme="dark"
-          position="bottom-center"
+          position="top-center"
           toastOptions={{
             style: {
               background: "var(--surface-3)",
