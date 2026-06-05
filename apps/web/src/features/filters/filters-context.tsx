@@ -8,37 +8,76 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { AttributionModel, type ReportFilter } from "@/lib/types";
+import {
+  AttributionModel,
+  type AudienceOrigin,
+  type ReportFilter,
+} from "@/lib/types";
+
+/** Estado de filtros tal como lo expone la UI (modelo, ventana, rango, etc.). */
+export interface DashFilters {
+  model: AttributionModel;
+  /** Ventana de atribución en días (slider 3–90); recalcula en el backend. */
+  windowDays: number;
+  /** Rango de fechas del reporte en días (7 / 30 / 90). */
+  fromDays: number;
+  /** id de campaña o "all". */
+  campaignId: string;
+  /** AudienceOrigin o "all". */
+  origin: string;
+}
+
+const DEFAULT: DashFilters = {
+  model: AttributionModel.LINEAR,
+  windowDays: 30,
+  fromDays: 90,
+  campaignId: "all",
+  origin: "all",
+};
 
 interface FiltersContextValue {
-  filter: ReportFilter;
-  /** Mezcla parcial (un eje a la vez) y conserva el resto. */
-  patch: (partial: Partial<ReportFilter>) => void;
-  /** Reemplaza todos los filtros (lo usa el modo conversacional). */
-  replace: (next: ReportFilter) => void;
+  f: DashFilters;
+  /** ReportFilter derivado para las consultas a la API. */
+  report: ReportFilter;
+  set: (patch: Partial<DashFilters>) => void;
   reset: () => void;
 }
 
-const DEFAULT_FILTER: ReportFilter = { model: AttributionModel.LINEAR };
-
 const FiltersContext = createContext<FiltersContextValue | null>(null);
 
+/** YYYY-MM-DD de hace `days` días (estable dentro del día → buen queryKey). */
+function isoDaysAgo(days: number): string {
+  const d = new Date();
+  d.setDate(d.getDate() - days);
+  return d.toISOString().slice(0, 10);
+}
+
 export function FiltersProvider({ children }: { children: ReactNode }) {
-  const [filter, setFilter] = useState<ReportFilter>(DEFAULT_FILTER);
+  const [f, setF] = useState<DashFilters>(DEFAULT);
 
-  const patch = useCallback((partial: Partial<ReportFilter>) => {
-    setFilter((prev) => ({ ...prev, ...partial }));
-  }, []);
+  const set = useCallback(
+    (patch: Partial<DashFilters>) => setF((prev) => ({ ...prev, ...patch })),
+    [],
+  );
+  const reset = useCallback(
+    () => setF((prev) => ({ ...prev, campaignId: "all", origin: "all", fromDays: 90 })),
+    [],
+  );
 
-  const replace = useCallback((next: ReportFilter) => {
-    setFilter({ model: next.model ?? AttributionModel.LINEAR, ...next });
-  }, []);
-
-  const reset = useCallback(() => setFilter(DEFAULT_FILTER), []);
+  const report = useMemo<ReportFilter>(
+    () => ({
+      model: f.model,
+      from: isoDaysAgo(f.fromDays),
+      to: new Date().toISOString().slice(0, 10),
+      campaignId: f.campaignId === "all" ? undefined : f.campaignId,
+      audienceOrigin: f.origin === "all" ? undefined : (f.origin as AudienceOrigin),
+    }),
+    [f.model, f.fromDays, f.campaignId, f.origin],
+  );
 
   const value = useMemo(
-    () => ({ filter, patch, replace, reset }),
-    [filter, patch, replace, reset],
+    () => ({ f, report, set, reset }),
+    [f, report, set, reset],
   );
 
   return (

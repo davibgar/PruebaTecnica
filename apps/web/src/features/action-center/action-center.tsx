@@ -1,118 +1,132 @@
 "use client";
 
 import { toast } from "sonner";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardBody, CardHeader } from "@/components/ui/card";
-import { Emoji, type EmojiName } from "@/components/ui/emoji";
+import { Icon, type IconName } from "@/components/ui/icon";
 import { QueryBoundary } from "@/components/ui/query-boundary";
-import { ListSkeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/states";
 import { ApiError } from "@/lib/api/client";
 import { formatDate } from "@/lib/format";
 import type { Recommendation, RecommendationType, Task } from "@/lib/types";
-import { useFilters } from "../filters/filters-context";
 import {
   useAcceptRecommendation,
   useCompleteTask,
   useDismissRecommendation,
-  useGenerateRecommendations,
   useRecommendations,
   useTasks,
 } from "./queries";
 
-const TYPE_ICON: Record<RecommendationType, EmojiName> = {
-  pause_low_roas: "chart-decreasing",
-  scale_best_origin: "rocket",
-  review_reconciliation: "warning",
+type Severity = "high" | "warn" | "good";
+
+const SEV: Record<RecommendationType, Severity> = {
+  pause_low_roas: "high",
+  review_reconciliation: "warn",
+  scale_best_origin: "good",
+};
+const SEV_ICON: Record<RecommendationType, IconName> = {
+  pause_low_roas: "alert",
+  review_reconciliation: "scale",
+  scale_best_origin: "target",
+};
+const SEV_LABEL: Record<Severity, string> = {
+  high: "Urgente",
+  warn: "Revisar",
+  good: "Oportunidad",
+};
+const SEV_COLOR: Record<Severity, string> = {
+  high: "var(--danger)",
+  warn: "var(--amber)",
+  good: "var(--accent)",
 };
 
 function errMsg(e: unknown): string {
   return e instanceof ApiError ? e.message : "Algo salió mal";
 }
 
-/**
- * Action Center: convierte las recomendaciones derivadas del dato real en tasks
- * accionables. Aceptar crea una task; descartar la oculta; completar la cierra.
- * Cada acción dispara un toast e invalida la cache para refrescar la bandeja.
- */
+function initials(name: string): string {
+  return name
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((w) => w[0]?.toUpperCase() ?? "")
+    .join("");
+}
+
+/** Métrica destacada de la recomendación, derivada del contexto del backend. */
+function recMetric(rec: Recommendation): { value: string; label: string } {
+  const ctx = rec.context as { roasReal?: number; reconciliationDiffPct?: number };
+  if (rec.type === "review_reconciliation") {
+    return { value: `${Math.round(ctx.reconciliationDiffPct ?? 0)}%`, label: "Reconciliación" };
+  }
+  return { value: `${(ctx.roasReal ?? 0).toFixed(2)}×`, label: "ROAS real" };
+}
+
 export function ActionCenter() {
-  const { filter } = useFilters();
-  const generate = useGenerateRecommendations();
+  const recsQuery = useRecommendations();
+  const tasksQuery = useTasks();
 
-  const onGenerate = () =>
-    generate.mutate(filter.model, {
-      onSuccess: (r) =>
-        toast.success(
-          r.created > 0
-            ? `${r.created} recomendación(es) nueva(s)`
-            : "Sin cambios · ya estaban evaluadas",
-        ),
-      onError: (e) => toast.error(errMsg(e)),
-    });
+  const openTasks = (tasksQuery.data ?? []).filter((t) => t.status !== "done");
 
   return (
-    <Card>
-      <CardHeader
-        icon="light-bulb"
-        eyebrow="Capa cross-módulo"
-        title="Action Center"
-        description="Recomendaciones accionables a partir del ROAS real y la reconciliación."
-        action={
-          <Button
-            variant="secondary"
-            disabled={generate.isPending}
-            onClick={onGenerate}
-          >
-            <Emoji name="sparkles" size={14} />
-            {generate.isPending ? "Generando…" : "Generar recomendaciones"}
-          </Button>
-        }
-      />
-      <CardBody className="grid grid-cols-1 gap-6 xl:grid-cols-2">
-        <RecommendationsColumn />
-        <TasksColumn />
-      </CardBody>
-    </Card>
-  );
-}
-
-function RecommendationsColumn() {
-  const query = useRecommendations();
-
-  return (
-    <section>
-      <h3 className="eyebrow mb-3">Recomendaciones pendientes</h3>
-      <QueryBoundary
-        query={query}
-        skeleton={<ListSkeleton items={3} />}
-        isEmpty={(rows) => rows.length === 0}
-        emptyTitle="Sin recomendaciones pendientes"
-        emptyDescription="Pulsa «Generar recomendaciones» para evaluar las reglas."
-      >
-        {(rows) => (
-          <ul className="space-y-3">
-            {rows.map((rec) => (
-              <RecommendationCard key={rec.id} rec={rec} />
-            ))}
-          </ul>
+    <div className="section">
+      <div className="section-head">
+        <span className="section-title">Action Center</span>
+        <span className="section-hint">Recomendaciones de IA estratégica → tasks accionables</span>
+        <span className="spacer" />
+        {(recsQuery.data?.length ?? 0) > 0 && (
+          <span className="count-badge">{recsQuery.data!.length} nuevas</span>
         )}
-      </QueryBoundary>
-    </section>
+      </div>
+
+      <div className="ac">
+        <QueryBoundary query={recsQuery} skeleton={<RecsSkeleton />}>
+          {(recs) =>
+            recs.length === 0 && openTasks.length === 0 ? (
+              <div className="card">
+                <EmptyState
+                  icon="spark"
+                  title="Sin recomendaciones ahora"
+                  description="Cuando los datos disparen una regla, aparecerá aquí una acción sugerida."
+                />
+              </div>
+            ) : (
+              <>
+                {recs.map((r) => (
+                  <RecCard key={r.id} rec={r} />
+                ))}
+              </>
+            )
+          }
+        </QueryBoundary>
+
+        {(tasksQuery.data?.length ?? 0) > 0 && (
+          <div style={{ marginTop: 4 }}>
+            <div className="sub-h" style={{ margin: "8px 0 10px" }}>
+              <Icon name="check" size={14} /> Tasks aceptadas
+              <span className="count-badge" style={{ marginLeft: 4 }}>{openTasks.length} abiertas</span>
+            </div>
+            <div className="tasks">
+              {tasksQuery.data!.map((t) => (
+                <TaskRow key={t.id} task={t} />
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
 
-function RecommendationCard({ rec }: { rec: Recommendation }) {
+function RecCard({ rec }: { rec: Recommendation }) {
   const accept = useAcceptRecommendation();
   const dismiss = useDismissRecommendation();
+  const sev = SEV[rec.type];
+  const metric = recMetric(rec);
   const busy = accept.isPending || dismiss.isPending;
 
   const onAccept = () =>
     accept.mutate(rec.id, {
-      onSuccess: () => toast.success("Aceptada · task creada"),
+      onSuccess: () => toast.success("Task creada · " + rec.suggestedOwner),
       onError: (e) => toast.error(errMsg(e)),
     });
-
   const onDismiss = () =>
     dismiss.mutate(rec.id, {
       onSuccess: () => toast("Recomendación descartada"),
@@ -120,100 +134,73 @@ function RecommendationCard({ rec }: { rec: Recommendation }) {
     });
 
   return (
-    <li className="rounded-xl border border-border bg-surface-2/40 p-3.5 transition-colors hover:border-border-strong">
-      <p className="flex items-start gap-2 text-sm font-medium text-foreground">
-        <Emoji name={TYPE_ICON[rec.type]} size={15} className="mt-0.5 shrink-0" />
-        {rec.title}
-      </p>
-      <p className="mt-1 pl-6 text-xs text-muted">{rec.cta}</p>
-      <div className="mt-2 flex items-center gap-2 pl-6 text-[11px] text-muted/80">
-        <span>{rec.suggestedOwner}</span>
-        <span>·</span>
-        <span>vence {formatDate(rec.suggestedDate)}</span>
+    <div className={"rec " + sev}>
+      <div className="rec-top">
+        <div className="rec-ico"><Icon name={SEV_ICON[rec.type]} size={16} /></div>
+        <span className="rec-sev">{SEV_LABEL[sev]}</span>
+        <div className="rec-metric">
+          <div className="rm-val" style={{ color: SEV_COLOR[sev] }}>{metric.value}</div>
+          <div className="rm-lbl">{metric.label}</div>
+        </div>
       </div>
-      <div className="mt-3 flex gap-2 pl-6">
-        <Button variant="brand" disabled={busy} onClick={onAccept}>
-          <Emoji name="check" size={13} /> Aceptar
-        </Button>
-        <Button variant="danger" disabled={busy} onClick={onDismiss}>
-          <Emoji name="cross" size={13} /> Descartar
-        </Button>
+      <div className="rec-title">{rec.title}</div>
+      <div className="rec-ctx">{rec.cta}</div>
+      <div className="rec-meta">
+        <span className="owner">
+          <span className="avatar">{initials(rec.suggestedOwner)}</span> {rec.suggestedOwner}
+        </span>
+        <span style={{ display: "flex", alignItems: "center", gap: 5 }}>
+          <Icon name="cal" size={13} /> Sugerida {formatDate(rec.suggestedDate)}
+        </span>
       </div>
-    </li>
+      <div className="rec-actions">
+        <button className="btn btn-primary" disabled={busy} onClick={onAccept}>
+          <Icon name="check" size={14} /> Aceptar y crear task
+        </button>
+        <button className="btn btn-ghost" disabled={busy} onClick={onDismiss} title="Descartar">
+          <Icon name="x" size={14} />
+        </button>
+      </div>
+    </div>
   );
 }
 
-function TasksColumn() {
-  const query = useTasks();
-
-  return (
-    <section>
-      <h3 className="eyebrow mb-3">Tasks</h3>
-      <QueryBoundary query={query} skeleton={<ListSkeleton items={2} />}>
-        {(rows) =>
-          rows.length === 0 ? (
-            <EmptyState
-              title="Sin tasks"
-              description="Acepta una recomendación para crear una task."
-            />
-          ) : (
-            <ul className="space-y-3">
-              {rows.map((task) => (
-                <TaskCard key={task.id} task={task} />
-              ))}
-            </ul>
-          )
-        }
-      </QueryBoundary>
-    </section>
-  );
-}
-
-function TaskCard({ task }: { task: Task }) {
+function TaskRow({ task }: { task: Task }) {
   const complete = useCompleteTask();
-  const isDone = task.status === "done";
-
-  const onComplete = () =>
+  const done = task.status === "done";
+  const onToggle = () => {
+    if (done) return;
     complete.mutate(task.id, {
       onSuccess: () => toast.success("Task completada"),
       onError: (e) => toast.error(errMsg(e)),
     });
-
+  };
   return (
-    <li className="rounded-xl border border-border bg-surface-2/40 p-3.5">
-      <div className="flex items-start justify-between gap-2">
-        <p
-          className={
-            isDone
-              ? "flex items-center gap-2 text-sm font-medium text-muted line-through"
-              : "flex items-center gap-2 text-sm font-medium text-foreground"
-          }
-        >
-          <Emoji name={isDone ? "check" : "pushpin"} size={14} className="shrink-0" />
-          {task.title}
-        </p>
-        {isDone ? (
-          <Badge tone="green">Hecha</Badge>
-        ) : (
-          <Badge tone="blue">Abierta</Badge>
-        )}
-      </div>
-      <div className="mt-2 flex items-center gap-2 pl-6 text-[11px] text-muted/80">
-        <span>{task.owner}</span>
-        <span>·</span>
-        <span>vence {formatDate(task.dueDate)}</span>
-      </div>
-      {!isDone && (
-        <div className="mt-3 pl-6">
-          <Button
-            variant="secondary"
-            disabled={complete.isPending}
-            onClick={onComplete}
-          >
-            <Emoji name="check" size={13} /> Marcar hecha
-          </Button>
+    <div className={"task" + (done ? " done" : "")}>
+      <button className={"task-check" + (done ? " on" : "")} onClick={onToggle} disabled={complete.isPending}>
+        {done && <Icon name="check" size={12} />}
+      </button>
+      <div className="task-body">
+        <div className="task-title">{task.title}</div>
+        <div className="task-meta">
+          <span>Vence {formatDate(task.dueDate)}</span>
         </div>
-      )}
-    </li>
+      </div>
+      <span className="task-owner">{task.owner}</span>
+    </div>
+  );
+}
+
+function RecsSkeleton() {
+  return (
+    <>
+      {Array.from({ length: 3 }).map((_, i) => (
+        <div className="rec good" key={i}>
+          <div className="skel" style={{ height: 30, width: "40%" }} />
+          <div className="skel" style={{ height: 16, width: "80%", marginTop: 12 }} />
+          <div className="skel" style={{ height: 36, width: "100%", marginTop: 14 }} />
+        </div>
+      ))}
+    </>
   );
 }

@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Manrope, Geist_Mono } from "next/font/google";
 import { Toaster } from "sonner";
 import "./globals.css";
 import { Providers } from "./providers";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const manrope = Manrope({
+  variable: "--font-manrope",
   subsets: ["latin"],
+  weight: ["400", "600", "700", "800"],
 });
 
 const geistMono = Geist_Mono({
@@ -15,7 +16,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "NodoTech · Análisis de Marketing",
+  title: "NodoTech · Análisis con atribución real",
   description:
     "Dashboard de atribución multi-touch y ROAS real reconciliado contra ventas POS.",
 };
@@ -26,17 +27,19 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="es"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-    >
-      <body className="min-h-full" suppressHydrationWarning>
+    <html lang="es" className={`${manrope.variable} ${geistMono.variable}`}>
+      <body suppressHydrationWarning>
         <Providers>{children}</Providers>
         <Toaster
           theme="dark"
-          position="bottom-right"
-          richColors
-          closeButton
+          position="bottom-center"
+          toastOptions={{
+            style: {
+              background: "var(--surface-3)",
+              border: "1px solid var(--border-2)",
+              color: "var(--text)",
+            },
+          }}
         />
       </body>
     </html>

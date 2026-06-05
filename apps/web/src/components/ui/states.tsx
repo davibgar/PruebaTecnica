@@ -1,77 +1,52 @@
-import type { ReactNode } from "react";
-import { cn } from "@/lib/cn";
-import { Button } from "./button";
+import { Icon, type IconName } from "./icon";
 
-/** Spinner mínimo (SVG, sin dependencias) con el acento de marca. */
-export function Spinner({ className }: { className?: string }) {
+/** Spinner mínimo con el acento de marca. */
+export function Spinner({ size = 20 }: { size?: number }) {
   return (
     <svg
-      className={cn("animate-spin text-emerald-400", className)}
-      width="20"
-      height="20"
+      className="spin"
+      width={size}
+      height={size}
       viewBox="0 0 24 24"
       fill="none"
       role="status"
       aria-label="Cargando"
+      style={{ color: "var(--accent)" }}
     >
-      <circle
-        cx="12"
-        cy="12"
-        r="10"
-        stroke="currentColor"
-        strokeOpacity="0.2"
-        strokeWidth="4"
-      />
-      <path
-        d="M22 12a10 10 0 0 1-10 10"
-        stroke="currentColor"
-        strokeWidth="4"
-        strokeLinecap="round"
-      />
+      <circle cx="12" cy="12" r="10" stroke="currentColor" strokeOpacity="0.2" strokeWidth="3" />
+      <path d="M22 12a10 10 0 0 1-10 10" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
     </svg>
-  );
-}
-
-function CenteredMessage({
-  children,
-  className,
-}: {
-  children: ReactNode;
-  className?: string;
-}) {
-  return (
-    <div
-      className={cn(
-        "flex flex-col items-center justify-center gap-2 px-6 py-10 text-center text-sm",
-        className,
-      )}
-    >
-      {children}
-    </div>
   );
 }
 
 export function LoadingState({ label = "Cargando…" }: { label?: string }) {
   return (
-    <CenteredMessage className="text-muted">
-      <Spinner />
-      <span>{label}</span>
-    </CenteredMessage>
+    <div className="empty">
+      <div style={{ display: "grid", placeItems: "center", marginBottom: 10 }}>
+        <Spinner />
+      </div>
+      <div className="empty-sub">{label}</div>
+    </div>
   );
 }
 
 export function EmptyState({
   title = "Sin datos",
   description,
+  icon = "inbox",
 }: {
   title?: string;
   description?: string;
+  icon?: IconName;
 }) {
   return (
-    <CenteredMessage className="text-muted">
-      <p className="font-medium text-foreground/80">{title}</p>
-      {description && <p className="text-muted">{description}</p>}
-    </CenteredMessage>
+    <div className="empty">
+      <div className="empty-ico">
+        <Icon name={icon} size={40} />
+      </div>
+      <div className="empty-title">{title}</div>
+      {description && <div className="empty-sub">{description}</div>}
+    </div>
   );
 }
 
@@ -83,14 +58,21 @@ export function ErrorState({
   onRetry?: () => void;
 }) {
   return (
-    <CenteredMessage className="text-red-300">
-      <p className="font-medium">No se pudo cargar</p>
-      {message && <p className="text-red-300/60">{message}</p>}
+    <div className="empty">
+      <div className="empty-ico" style={{ color: "var(--danger)" }}>
+        <Icon name="alert" size={40} />
+      </div>
+      <div className="empty-title">No se pudo cargar</div>
+      {message && <div className="empty-sub">{message}</div>}
       {onRetry && (
-        <Button variant="secondary" onClick={onRetry} className="mt-1">
+        <button
+          className="btn btn-ghost"
+          style={{ marginTop: 14 }}
+          onClick={onRetry}
+        >
           Reintentar
-        </Button>
+        </button>
       )}
-    </CenteredMessage>
+    </div>
   );
 }

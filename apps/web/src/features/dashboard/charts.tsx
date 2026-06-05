@@ -1,198 +1,244 @@
 "use client";
 
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  Cell,
-  Legend,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
-import { Card, CardBody, CardHeader } from "@/components/ui/card";
+import { Icon } from "@/components/ui/icon";
 import { QueryBoundary } from "@/components/ui/query-boundary";
-import { ChartSkeleton } from "@/components/ui/skeleton";
-import { formatCop, formatRoas } from "@/lib/format";
-import type { CampaignReportRow } from "@/lib/types";
+import { EmptyState } from "@/components/ui/states";
+import { formatCop, formatCopShort } from "@/lib/format";
+import { originLabel } from "@/lib/labels";
+import { MODEL_LABELS } from "@/lib/labels";
+import type {
+  AudienceOriginPerformance,
+  CampaignReportRow,
+} from "@/lib/types";
 import { useFilters } from "../filters/filters-context";
-import { useCampaigns } from "./queries";
+import { useAudiencePerformance, useCampaigns } from "./queries";
 
-const COLORS = {
-  attributed: "#34d399", // esmeralda (marca)
-  flagged: "#fbbf24", // ámbar (reconciliación > 5%)
-  real: "#34d399", // esmeralda
-  platform: "#a78bfa", // violeta (acento secundario)
+const ORIGIN_COLOR: Record<string, string> = {
+  fria: "var(--o-fria)",
+  warm: "var(--o-warm)",
+  base_propia: "var(--o-base_propia)",
 };
 
-const AXIS = { fontSize: 11, fill: "#8b8b97" };
-const GRID = "#24242c";
-
-const TOOLTIP_STYLE = {
-  contentStyle: {
-    background: "#17171d",
-    border: "1px solid #32323c",
-    borderRadius: 12,
-    boxShadow: "0 8px 30px -12px rgba(0,0,0,0.8)",
-  },
-  labelStyle: { color: "#ededf0", fontWeight: 600, marginBottom: 4 },
-  itemStyle: { color: "#c4c4cc" },
-};
-
-/** Nombre corto para el eje X; el nombre completo va en el tooltip. */
-function shortName(name: string): string {
-  const head = name.split("—")[0].trim();
-  return head.length > 16 ? `${head.slice(0, 15)}…` : head;
-}
-
-const ROAS_LABELS: Record<string, string> = {
-  real: "ROAS real",
-  plataforma: "ROAS plataforma",
-};
-
-function fullNameLabel(
-  _: unknown,
-  payload?: ReadonlyArray<{ payload?: { fullName?: string } }>,
-): string {
-  return payload?.[0]?.payload?.fullName ?? "";
-}
-
-/** Los dos gráficos del dashboard: ingreso atribuido y ROAS real vs plataforma. */
-export function DashboardCharts() {
-  const { filter } = useFilters();
-  const query = useCampaigns(filter);
+export function Charts() {
+  const { f, report } = useFilters();
+  const campaigns = useCampaigns(report);
+  const audience = useAudiencePerformance(report);
 
   return (
-    <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
-      <Card>
-        <CardHeader
-          icon="bar-chart"
-          title="Ingreso atribuido por campaña"
-          description="Ventas reales (POS) repartidas por el modelo de atribución activo."
-        />
-        <CardBody>
+    <>
+      <div className="section grid-2">
+        <div className="card">
+          <div className="card-head">
+            <div>
+              <div className="card-title">Ingreso por campaña</div>
+              <div className="card-sub">
+                Modelo {MODEL_LABELS[f.model]} · ventana {f.windowDays} días
+              </div>
+            </div>
+          </div>
           <QueryBoundary
-            query={query}
-            skeleton={<ChartSkeleton />}
-            isEmpty={(rows) => rows.length === 0}
-            emptyTitle="Sin campañas en el alcance"
+            query={campaigns}
+            skeleton={<BarsSkeleton />}
+            isEmpty={(r) => r.length === 0}
+            emptyTitle="Sin ingreso atribuido"
           >
-            {(rows) => <RevenueChart rows={rows} />}
+            {(rows) => <BarByCampaign rows={rows} />}
           </QueryBoundary>
-        </CardBody>
-      </Card>
+        </div>
 
-      <Card>
-        <CardHeader
-          icon="chart-yen"
-          title="ROAS real vs ROAS plataforma"
-          description="La diferencia con el píxel de Meta, a la vista."
-        />
-        <CardBody>
+        <div className="card">
+          <div className="card-head">
+            <div>
+              <div className="card-title">ROAS real vs plataforma</div>
+              <div className="card-sub">La diferencia con Meta, a la vista</div>
+            </div>
+          </div>
           <QueryBoundary
-            query={query}
-            skeleton={<ChartSkeleton />}
-            isEmpty={(rows) => rows.length === 0}
-            emptyTitle="Sin campañas en el alcance"
+            query={campaigns}
+            skeleton={<BarsSkeleton />}
+            isEmpty={(r) => r.length === 0}
+            emptyTitle="Sin datos de ROAS"
           >
-            {(rows) => <RoasChart rows={rows} />}
+            {(rows) => <RoasGrouped rows={rows} />}
           </QueryBoundary>
-        </CardBody>
-      </Card>
+        </div>
+      </div>
+
+      <div className="section grid-3">
+        <div className="card">
+          <div className="card-head">
+            <div>
+              <div className="card-title">Ingreso real por origen de audiencia</div>
+              <div className="card-sub">
+                Frías · Warm · Base propia — el diferencial NodoTech
+              </div>
+            </div>
+          </div>
+          <QueryBoundary
+            query={audience}
+            skeleton={<DonutSkeleton />}
+            isEmpty={(r) => r.length === 0}
+            emptyTitle="Sin datos por origen"
+          >
+            {(rows) => <OriginDonut rows={rows} />}
+          </QueryBoundary>
+        </div>
+
+        <div
+          className="card"
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center",
+            background: "linear-gradient(165deg, var(--accent-softer), var(--surface) 70%)",
+          }}
+        >
+          <QueryBoundary query={audience}>
+            {(rows) => <OriginInsight rows={rows} />}
+          </QueryBoundary>
+        </div>
+      </div>
+    </>
+  );
+}
+
+function BarByCampaign({ rows }: { rows: CampaignReportRow[] }) {
+  const sorted = [...rows].sort((a, b) => b.attributedRevenue - a.attributedRevenue);
+  const max = Math.max(1, ...sorted.map((r) => r.attributedRevenue));
+  return (
+    <div>
+      {sorted.map((r) => (
+        <div className="barrow" key={r.campaignId}>
+          <div className="name" title={r.name}>{r.name}</div>
+          <div className="bartrack">
+            <div className="barfill" style={{ width: (r.attributedRevenue / max) * 100 + "%" }} />
+          </div>
+          <div className="amt">{formatCopShort(r.attributedRevenue)}</div>
+        </div>
+      ))}
     </div>
   );
 }
 
-function RevenueChart({ rows }: { rows: CampaignReportRow[] }) {
-  const data = rows.map((r) => ({
-    name: shortName(r.name),
-    fullName: r.name,
-    attributed: r.attributedRevenue,
-    flagged: r.flagged,
-  }));
-
+function RoasGrouped({ rows }: { rows: CampaignReportRow[] }) {
+  const max = Math.max(1, ...rows.flatMap((r) => [r.roasReal, r.roasPlatform]));
   return (
-    <ResponsiveContainer width="100%" height={260}>
-      <BarChart data={data} margin={{ top: 8, right: 8, bottom: 8, left: 8 }}>
-        <CartesianGrid strokeDasharray="3 3" stroke={GRID} vertical={false} />
-        <XAxis
-          dataKey="name"
-          tick={AXIS}
-          tickLine={false}
-          axisLine={{ stroke: GRID }}
-        />
-        <YAxis
-          tickFormatter={(v: number) => `${Math.round(v / 1_000_000)}M`}
-          tick={AXIS}
-          tickLine={false}
-          axisLine={false}
-          width={36}
-        />
-        <Tooltip
-          {...TOOLTIP_STYLE}
-          formatter={(value) => [formatCop(Number(value)), "Atribuido"]}
-          labelFormatter={fullNameLabel}
-          cursor={{ fill: "rgba(255,255,255,0.04)" }}
-        />
-        <Bar dataKey="attributed" radius={[5, 5, 0, 0]}>
-          {data.map((d, i) => (
-            <Cell
-              key={i}
-              fill={d.flagged ? COLORS.flagged : COLORS.attributed}
-            />
-          ))}
-        </Bar>
-      </BarChart>
-    </ResponsiveContainer>
+    <div>
+      <div className="legend" style={{ marginBottom: 6 }}>
+        <span className="legend-item">
+          <span className="legend-dot" style={{ background: "var(--accent)" }} /> ROAS real (POS)
+        </span>
+        <span className="legend-item">
+          <span className="legend-dot" style={{ background: "var(--violet)" }} /> ROAS plataforma (píxel)
+        </span>
+      </div>
+      {rows.map((r) => (
+        <div className="grow" key={r.campaignId}>
+          <div className="name" title={r.name} style={{ fontSize: 12.5, fontWeight: 700, color: "var(--text-2)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            {r.name}
+          </div>
+          <div className="gpair">
+            <div className="gbar">
+              <div className="gtrack"><div className="gfill real" style={{ width: (r.roasReal / max) * 100 + "%" }} /></div>
+              <div className="gval" style={{ color: "var(--accent)" }}>{r.roasReal.toFixed(2)}×</div>
+            </div>
+            <div className="gbar">
+              <div className="gtrack"><div className="gfill plat" style={{ width: (r.roasPlatform / max) * 100 + "%" }} /></div>
+              <div className="gval" style={{ color: "var(--violet)" }}>{r.roasPlatform.toFixed(2)}×</div>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
   );
 }
 
-function RoasChart({ rows }: { rows: CampaignReportRow[] }) {
-  const data = rows.map((r) => ({
-    name: shortName(r.name),
-    fullName: r.name,
-    real: r.roasReal,
-    plataforma: r.roasPlatform,
-  }));
+function OriginDonut({ rows }: { rows: AudienceOriginPerformance[] }) {
+  const total = rows.reduce((s, r) => s + r.attributedRevenue, 0) || 1;
+  const best = rows.find((r) => r.attributedRevenue > 0);
+  let acc = 0;
+  const grad = rows
+    .map((r) => {
+      const from = acc;
+      acc += r.attributedRevenue / total;
+      return `${ORIGIN_COLOR[r.audienceOrigin]} ${(from * 100).toFixed(1)}% ${(acc * 100).toFixed(1)}%`;
+    })
+    .join(", ");
 
   return (
-    <ResponsiveContainer width="100%" height={260}>
-      <BarChart data={data} margin={{ top: 8, right: 8, bottom: 8, left: 8 }}>
-        <CartesianGrid strokeDasharray="3 3" stroke={GRID} vertical={false} />
-        <XAxis
-          dataKey="name"
-          tick={AXIS}
-          tickLine={false}
-          axisLine={{ stroke: GRID }}
-        />
-        <YAxis
-          tickFormatter={(v: number) => `${v}x`}
-          tick={AXIS}
-          tickLine={false}
-          axisLine={false}
-          width={32}
-        />
-        <Tooltip
-          {...TOOLTIP_STYLE}
-          formatter={(value, name) => [
-            formatRoas(Number(value)),
-            ROAS_LABELS[String(name)] ?? String(name),
-          ]}
-          labelFormatter={fullNameLabel}
-          cursor={{ fill: "rgba(255,255,255,0.04)" }}
-        />
-        <Legend
-          formatter={(v) => (
-            <span className="text-muted">
-              {v === "real" ? "ROAS real" : "ROAS plataforma"}
-            </span>
-          )}
-          wrapperStyle={{ fontSize: 12 }}
-        />
-        <Bar dataKey="real" fill={COLORS.real} radius={[5, 5, 0, 0]} />
-        <Bar dataKey="plataforma" fill={COLORS.platform} radius={[5, 5, 0, 0]} />
-      </BarChart>
-    </ResponsiveContainer>
+    <div className="donut-wrap">
+      <div className="donut">
+        <div style={{ position: "absolute", inset: 0, borderRadius: "50%", background: total > 1 ? `conic-gradient(${grad})` : "var(--surface-2)" }} />
+        <div style={{ position: "absolute", inset: 16, borderRadius: "50%", background: "var(--surface)" }} />
+        <div className="donut-center">
+          <div className="dc-val">{formatCopShort(total > 1 ? total : 0)}</div>
+          <div className="dc-lbl">Ingreso real</div>
+        </div>
+      </div>
+      <div className="origin-rows">
+        {rows.map((r) => (
+          <div className="origin-row" key={r.audienceOrigin}>
+            <div className="origin-name">
+              <span className="o-dot" style={{ background: ORIGIN_COLOR[r.audienceOrigin] }} />
+              {originLabel(r.audienceOrigin)}
+              {best?.audienceOrigin === r.audienceOrigin && r.attributedRevenue > 0 && (
+                <span className="best-tag">mejor ROAS</span>
+              )}
+            </div>
+            <div className="origin-roas" style={{ color: ORIGIN_COLOR[r.audienceOrigin] }}>{r.roasReal.toFixed(2)}×</div>
+            <div className="origin-sub">
+              {formatCopShort(r.attributedRevenue)} atribuido · inv. {formatCopShort(r.proratedSpend)}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function OriginInsight({ rows }: { rows: AudienceOriginPerformance[] }) {
+  const best = rows.find((r) => r.attributedRevenue > 0 && r.proratedSpend > 0);
+  if (!best) {
+    return <EmptyState icon="target" title="Sin origen destacado" description="Ajusta los filtros para ver el mejor origen." />;
+  }
+  return (
+    <>
+      <div style={{ fontSize: 11.5, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".08em", color: "var(--accent)", display: "flex", alignItems: "center", gap: 7 }}>
+        <Icon name="target" size={15} /> Insight de origen
+      </div>
+      <div style={{ fontSize: 19, fontWeight: 800, letterSpacing: "-.02em", marginTop: 12, textWrap: "pretty" }}>
+        <span style={{ color: "var(--accent)" }}>{originLabel(best.audienceOrigin)}</span> rinde mejor: {best.roasReal.toFixed(2)}× ROAS real
+      </div>
+      <div style={{ fontSize: 13, color: "var(--text-2)", marginTop: 10, lineHeight: 1.55, textWrap: "pretty" }}>
+        De {formatCop(best.attributedRevenue)} en ingreso atribuido sobre {formatCop(best.proratedSpend)} de inversión asignada. Considera reasignar presupuesto hacia este origen.
+      </div>
+    </>
+  );
+}
+
+function BarsSkeleton() {
+  return (
+    <div>
+      {Array.from({ length: 4 }).map((_, i) => (
+        <div className="barrow" key={i}>
+          <div className="skel" style={{ height: 12, width: 100 }} />
+          <div className="skel" style={{ height: 26 }} />
+          <div className="skel" style={{ height: 12, width: 60 }} />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function DonutSkeleton() {
+  return (
+    <div className="donut-wrap">
+      <div className="skel" style={{ width: 132, height: 132, borderRadius: "50%" }} />
+      <div className="origin-rows" style={{ flex: 1 }}>
+        {Array.from({ length: 3 }).map((_, i) => (
+          <div className="skel" key={i} style={{ height: 32 }} />
+        ))}
+      </div>
+    </div>
   );
 }

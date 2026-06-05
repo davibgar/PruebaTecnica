@@ -1,83 +1,70 @@
 "use client";
 
-import { Reveal } from "@/components/ui/reveal";
+import { useEffect, useState } from "react";
 import { ActionCenter } from "../action-center/action-center";
-import { ConversationalFilter } from "../filters/conversational-filter";
-import { FilterBar } from "../filters/filter-bar";
 import { FiltersProvider } from "../filters/filters-context";
-import { AudiencePerformance } from "./audience-performance";
-import { CampaignTable } from "./campaign-table";
-import { DashboardCharts } from "./charts";
-import { MetricsCards } from "./metrics-cards";
+import { Charts } from "./charts";
+import { CommandBar } from "./command-bar";
+import { FiltersBar } from "./filters-bar";
+import { Metrics } from "./metrics";
+import { ReconTable } from "./recon-table";
+import { Sidebar } from "./sidebar";
+import { ACCENTS, Tweaks, type Density } from "./tweaks";
 
 /**
- * Raíz de composición del dashboard de entrada (sub-módulo 07). Provee el
- * contexto de filtros y orquesta las secciones; cada una se invalida sola al
- * cambiar un filtro.
+ * App shell del sub-módulo 07 (Análisis): sidebar de módulos + main con topbar,
+ * command bar conversacional, filtros y todas las secciones del dashboard.
  */
 export function DashboardPage() {
+  const [accent, setAccent] = useState("Esmeralda");
+  const [density, setDensity] = useState<Density>("balanced");
+
+  useEffect(() => {
+    const root = document.documentElement;
+    root.style.setProperty("--accent", "oklch(" + ACCENTS[accent] + ")");
+    const [l, c, h] = ACCENTS[accent].split(" ");
+    root.style.setProperty("--accent-2", `oklch(${(parseFloat(l) - 0.08).toFixed(2)} ${c} ${h})`);
+    root.style.setProperty("--accent-dim", `oklch(0.45 0.08 ${h})`);
+  }, [accent]);
+
   return (
     <FiltersProvider>
-      <BrandBar />
-      <div className="mx-auto max-w-7xl px-4 py-8 lg:px-8">
-        <header className="mb-7">
-          <p className="eyebrow">07 · Análisis · Marketing</p>
-          <h1 className="mt-1.5 text-2xl font-semibold tracking-tight text-foreground">
-            Análisis de Marketing
-          </h1>
-          <p className="mt-1 text-sm text-muted">
-            Atribución multi-touch y ROAS real reconciliado contra ventas POS.
-          </p>
-        </header>
+      <div className="app" data-density={density}>
+        <Sidebar />
+        <main className="main">
+          <div className="topbar">
+            <div className="crumbs">
+              Marketing <span className="sep">/</span> Análisis{" "}
+              <span className="sep">/</span> <b>Atribución multi-touch</b>
+            </div>
+            <div className="page-head">
+              <div>
+                <h1 className="page-title">Análisis con atribución real</h1>
+                <div className="page-desc">
+                  ROAS reconciliado contra ventas POS reales · atribución multi-touch
+                  conmutable sobre datos cruzados marketing + POS
+                </div>
+              </div>
+            </div>
+            <CommandBar />
+          </div>
 
-        <div className="space-y-6">
-          <Reveal delay={0}>
-            <ConversationalFilter />
-          </Reveal>
-          <Reveal delay={0.05}>
-            <FilterBar />
-          </Reveal>
-          <Reveal delay={0.1}>
-            <MetricsCards />
-          </Reveal>
-          <Reveal delay={0.15}>
-            <DashboardCharts />
-          </Reveal>
-          <Reveal delay={0.2}>
-            <CampaignTable />
-          </Reveal>
-          <Reveal delay={0.25}>
-            <AudiencePerformance />
-          </Reveal>
-          <Reveal delay={0.3}>
+          <div className="content">
+            <FiltersBar />
+            <Metrics />
+            <Charts />
+            <ReconTable />
             <ActionCenter />
-          </Reveal>
-        </div>
+          </div>
+        </main>
       </div>
-    </FiltersProvider>
-  );
-}
 
-/** Barra superior con la marca NodoTech. */
-function BrandBar() {
-  return (
-    <div className="sticky top-0 z-40 border-b border-border/70 bg-background/80 backdrop-blur-md">
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 lg:px-8">
-        <div className="flex items-center gap-2.5">
-          <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-400 to-violet-500 text-xs font-bold text-background shadow-[0_0_20px_-4px_rgba(52,211,153,0.5)]">
-            N
-          </span>
-          <span className="text-sm font-semibold tracking-tight text-foreground">
-            NodoTech
-          </span>
-          <span className="hidden text-xs text-muted sm:inline">
-            · Módulo Marketing
-          </span>
-        </div>
-        <span className="rounded-full bg-white/5 px-2.5 py-1 text-[11px] font-medium text-muted ring-1 ring-inset ring-white/10">
-          Negocio demo
-        </span>
-      </div>
-    </div>
+      <Tweaks
+        accent={accent}
+        density={density}
+        onAccent={setAccent}
+        onDensity={setDensity}
+      />
+    </FiltersProvider>
   );
 }
