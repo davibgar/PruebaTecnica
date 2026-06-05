@@ -3,13 +3,17 @@
 # monta como volumen desde el host (ver docker-compose), así los cambios se
 # recompilan dentro del contenedor. Escucha en 0.0.0.0 para ser accesible desde
 # el host.
+#
+# Usa --webpack (no Turbopack): el watcher de Turbopack no detecta cambios a
+# través del bind-mount de Docker en Windows; webpack sí respeta
+# WATCHPACK_POLLING (definido en docker-compose), así el hot-reload funciona.
 FROM node:22-alpine AS development
 WORKDIR /app
 COPY package*.json ./
 RUN npm ci
 COPY . .
 EXPOSE 3000
-CMD ["sh", "-c", "npm run dev -- -H 0.0.0.0 -p 3000"]
+CMD ["sh", "-c", "npm run dev -- --webpack -H 0.0.0.0 -p 3000"]
 
 # ---------- Build (producción) ----------
 # Las variables NEXT_PUBLIC_* se inlinean en el bundle de cliente en build time,
