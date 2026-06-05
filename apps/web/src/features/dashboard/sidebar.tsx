@@ -1,20 +1,55 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { Icon, type IconName } from "@/components/ui/icon";
 import { useOverview } from "./queries";
 
-const NAV: { ico: IconName; label: string; badge?: string; active?: boolean }[] = [
-  { ico: "layers", label: "Cimientos" },
-  { ico: "send", label: "Estrategia" },
-  { ico: "audience", label: "Audiencias", badge: "Dif." },
-  { ico: "funnel", label: "Captación" },
-  { ico: "analysis", label: "Análisis", active: true },
+/** Secciones de la página; el sidebar navega entre ellas (scroll + activo). */
+export const SECTIONS: { id: string; label: string; ico: IconName }[] = [
+  { id: "resumen", label: "Resumen", ico: "pulse" },
+  { id: "graficos", label: "Gráficos", ico: "analysis" },
+  { id: "reconciliacion", label: "Reconciliación", ico: "scale" },
+  { id: "action-center", label: "Action Center", ico: "spark" },
 ];
 
-/** Navegación del módulo Marketing (sub-módulos). Solo "Análisis" está activo. */
+/**
+ * Resalta la sección activa: la última cuyo borde superior ya cruzó el topbar
+ * sticky. Más fiable que IntersectionObserver cuando dos secciones comparten
+ * viewport.
+ */
+function useScrollSpy(ids: string[]): string {
+  const [active, setActive] = useState(ids[0]);
+  useEffect(() => {
+    const root = document.querySelector(".main");
+    if (!root) return;
+    const OFFSET = 200; // alto aproximado del topbar sticky
+
+    const onScroll = () => {
+      let current = ids[0];
+      for (const id of ids) {
+        const el = document.getElementById(id);
+        if (el && el.getBoundingClientRect().top <= OFFSET) current = id;
+      }
+      setActive(current);
+    };
+
+    onScroll();
+    root.addEventListener("scroll", onScroll, { passive: true });
+    return () => root.removeEventListener("scroll", onScroll);
+  }, [ids]);
+
+  return active;
+}
+
+const SECTION_IDS = SECTIONS.map((s) => s.id);
+
 export function Sidebar() {
   const overview = useOverview();
   const bizId = overview.data?.businessId;
+  const active = useScrollSpy(SECTION_IDS);
+
+  const go = (id: string) =>
+    document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
 
   return (
     <aside className="sidebar">
@@ -22,33 +57,23 @@ export function Sidebar() {
         <div className="brand-mark">N</div>
         <div>
           <div className="brand-name">NodoTech</div>
-          <div className="brand-sub">Marketing</div>
+          <div className="brand-sub">Marketing · Análisis</div>
         </div>
       </div>
 
-      <div className="nav-label">Módulo Marketing</div>
-      {NAV.map((n) => (
+      <div className="nav-label">Atribución multi-touch</div>
+      {SECTIONS.map((s) => (
         <button
-          key={n.label}
-          className={"nav-item" + (n.active ? " active" : " disabled")}
+          key={s.id}
+          className={"nav-item" + (active === s.id ? " active" : "")}
+          onClick={() => go(s.id)}
         >
           <span className="nav-ico">
-            <Icon name={n.ico} size={17} />
+            <Icon name={s.ico} size={17} />
           </span>
-          {n.label}
-          {n.badge && <span className="nav-badge">{n.badge}</span>}
+          {s.label}
         </button>
       ))}
-
-      <div className="nav-label">Sub-módulo 07</div>
-      <button className="nav-item active" style={{ paddingLeft: 22 }}>
-        <span style={{ width: 6, height: 6, borderRadius: 99, background: "var(--accent)", flex: "none" }} />
-        Atribución multi-touch
-      </button>
-      <button className="nav-item disabled" style={{ paddingLeft: 22 }}>
-        <span style={{ width: 6, height: 6, borderRadius: 99, background: "var(--text-4)", flex: "none" }} />
-        Diario estratégico
-      </button>
 
       <div className="sidebar-foot">
         <div className="biz">

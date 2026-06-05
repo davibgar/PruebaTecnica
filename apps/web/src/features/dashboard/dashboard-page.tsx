@@ -54,10 +54,18 @@ export function DashboardPage() {
 
           <div className="content">
             <FiltersBar />
-            <Metrics />
-            <Charts />
-            <ReconTable />
-            <ActionCenter />
+            <div id="resumen" style={{ scrollMarginTop: 176 }}>
+              <Metrics />
+            </div>
+            <div id="graficos" style={{ scrollMarginTop: 176 }}>
+              <Charts />
+            </div>
+            <div id="reconciliacion" style={{ scrollMarginTop: 176 }}>
+              <ReconTable />
+            </div>
+            <div id="action-center" style={{ scrollMarginTop: 176 }}>
+              <ActionCenter />
+            </div>
           </div>
         </main>
       </div>
