@@ -254,3 +254,4 @@ Filtros comunes del dashboard (query params): `from`, `to`, `campaignId`,
 | `PATCH` | `/api/action-center/recommendations/:id/dismiss` | Descarta la recomendación. |
 | `GET` | `/api/action-center/tasks` | Tasks aceptadas. |
 | `PATCH` | `/api/action-center/tasks/:id/complete` | Marca la task como hecha. |
+| `PATCH` | `/api/action-center/tasks/:id/reopen` | Reabre una task hecha (la desmarca). |

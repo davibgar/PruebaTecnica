@@ -120,17 +120,18 @@ export class ActionCenterService {
     return this.recommendations.save(recommendation);
   }
 
-  /** Marca una task como hecha. */
-  async completeTask(businessId: string, id: string): Promise<Task> {
+  /** Marca o desmarca una task como hecha (toggle bidireccional). */
+  async setTaskDone(
+    businessId: string,
+    id: string,
+    done: boolean,
+  ): Promise<Task> {
     const task = await this.tasks.findOne({ where: { id, businessId } });
     if (!task) {
       throw new NotFoundException(`Task ${id} no encontrada`);
     }
-    if (task.status === TaskStatus.DONE) {
-      throw new BadRequestException('La task ya está completada');
-    }
-    task.status = TaskStatus.DONE;
-    task.completedAt = new Date();
+    task.status = done ? TaskStatus.DONE : TaskStatus.OPEN;
+    task.completedAt = done ? new Date() : null;
     return this.tasks.save(task);
   }
 

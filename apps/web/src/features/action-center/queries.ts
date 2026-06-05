@@ -8,6 +8,7 @@ import {
   generateRecommendations,
   getRecommendations,
   getTasks,
+  reopenTask,
 } from "@/lib/api/action-center";
 import { queryKeys } from "@/lib/query-keys";
 import type { AttributionModel } from "@/lib/types";
@@ -60,6 +61,14 @@ export function useCompleteTask() {
   const invalidate = useInvalidateActionCenter();
   return useMutation({
     mutationFn: (id: string) => completeTask(id),
+    onSuccess: invalidate,
+  });
+}
+
+export function useReopenTask() {
+  const invalidate = useInvalidateActionCenter();
+  return useMutation({
+    mutationFn: (id: string) => reopenTask(id),
     onSuccess: invalidate,
   });
 }

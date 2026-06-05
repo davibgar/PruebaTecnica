@@ -40,3 +40,7 @@ export function getTasks(): Promise<Task[]> {
 export function completeTask(id: string): Promise<Task> {
   return request(`/action-center/tasks/${id}/complete`, { method: "PATCH" });
 }
+
+export function reopenTask(id: string): Promise<Task> {
+  return request(`/action-center/tasks/${id}/reopen`, { method: "PATCH" });
+}

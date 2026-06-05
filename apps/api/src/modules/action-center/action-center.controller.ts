@@ -61,12 +61,21 @@ export class ActionCenterController {
     return this.actionCenter.getTasks(businessId);
   }
 
-  /** Marca una task como hecha (cambio de estado). */
+  /** Marca una task como hecha. */
   @Patch('tasks/:id/complete')
   completeTask(
     @BusinessId() businessId: string,
     @Param('id', ParseUUIDPipe) id: string,
   ): Promise<Task> {
-    return this.actionCenter.completeTask(businessId, id);
+    return this.actionCenter.setTaskDone(businessId, id, true);
+  }
+
+  /** Reabre una task hecha (la desmarca). */
+  @Patch('tasks/:id/reopen')
+  reopenTask(
+    @BusinessId() businessId: string,
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<Task> {
+    return this.actionCenter.setTaskDone(businessId, id, false);
   }
 }

@@ -14,6 +14,7 @@ import {
   useDismissRecommendation,
   useGenerateRecommendations,
   useRecommendations,
+  useReopenTask,
   useTasks,
 } from "./queries";
 
@@ -185,17 +186,32 @@ function RecCard({ rec }: { rec: Recommendation }) {
 
 function TaskRow({ task }: { task: Task }) {
   const complete = useCompleteTask();
+  const reopen = useReopenTask();
   const done = task.status === "done";
+  const busy = complete.isPending || reopen.isPending;
+
   const onToggle = () => {
-    if (done) return;
-    complete.mutate(task.id, {
-      onSuccess: () => toast.success("Task completada"),
-      onError: (e) => toast.error(errMsg(e)),
-    });
+    if (done) {
+      reopen.mutate(task.id, {
+        onSuccess: () => toast("Task reabierta"),
+        onError: (e) => toast.error(errMsg(e)),
+      });
+    } else {
+      complete.mutate(task.id, {
+        onSuccess: () => toast.success("Task completada"),
+        onError: (e) => toast.error(errMsg(e)),
+      });
+    }
   };
+
   return (
     <div className={"task" + (done ? " done" : "")}>
-      <button className={"task-check" + (done ? " on" : "")} onClick={onToggle} disabled={complete.isPending}>
+      <button
+        className={"task-check" + (done ? " on" : "")}
+        onClick={onToggle}
+        disabled={busy}
+        title={done ? "Reabrir task" : "Marcar como hecha"}
+      >
         {done && <Icon name="check" size={12} />}
       </button>
       <div className="task-body">
