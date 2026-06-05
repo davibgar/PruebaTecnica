@@ -6,6 +6,7 @@ import { MODEL_LABELS, ORIGIN_LABELS } from "@/lib/labels";
 import { queryKeys } from "@/lib/query-keys";
 import { AttributionModel, AudienceOrigin } from "@/lib/types";
 import { Button } from "@/components/ui/button";
+import { Emoji } from "@/components/ui/emoji";
 import { Select, type SelectOption } from "@/components/ui/select";
 import { useFilters } from "./filters-context";
 
@@ -36,7 +37,11 @@ export function FilterBar() {
   );
 
   return (
-    <div className="flex flex-wrap items-end gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+    <div className="flex flex-wrap items-end gap-3 rounded-2xl border border-border bg-surface/70 p-4 shadow-sm backdrop-blur-sm">
+      <span className="mr-1 hidden items-center gap-1.5 self-center text-[11px] font-medium uppercase tracking-wide text-muted sm:flex">
+        <Emoji name="knobs" size={14} />
+        Filtros
+      </span>
       <DateField
         label="Desde"
         value={filter.from}
@@ -97,13 +102,15 @@ function DateField({
   onChange: (value: string | undefined) => void;
 }) {
   return (
-    <label className="flex flex-col gap-1">
-      <span className="text-xs font-medium text-slate-500">{label}</span>
+    <label className="flex flex-col gap-1.5">
+      <span className="text-[11px] font-medium uppercase tracking-wide text-muted">
+        {label}
+      </span>
       <input
         type="date"
         value={value ?? ""}
         onChange={(e) => onChange(e.target.value || undefined)}
-        className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-800 shadow-sm focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200"
+        className="rounded-lg border border-border-strong bg-surface-2 px-3 py-2 text-sm text-foreground shadow-sm [color-scheme:dark] focus:border-emerald-400/50 focus:outline-none focus:ring-2 focus:ring-emerald-400/20"
       />
     </label>
   );

@@ -4,6 +4,7 @@ import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Emoji } from "@/components/ui/emoji";
 import { parseFilters } from "@/lib/api/dashboard";
 import type {
   AttributionModel,
@@ -42,14 +43,20 @@ export function ConversationalFilter() {
   };
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+    <div className="rounded-2xl border border-violet-400/20 bg-gradient-to-br from-violet-500/[0.07] to-transparent p-4 shadow-sm">
+      <div className="mb-2 flex items-center gap-1.5">
+        <Emoji name="speech" size={15} />
+        <span className="text-[11px] font-medium uppercase tracking-wide text-violet-300/90">
+          Modo conversacional
+        </span>
+      </div>
       <div className="flex flex-col gap-2 sm:flex-row">
         <input
           value={text}
           onChange={(e) => setText(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && submit()}
           placeholder='Pídelo en lenguaje natural: "TikTok con time-decay últimos 30 días"'
-          className="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800 shadow-sm focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200"
+          className="flex-1 rounded-lg border border-border-strong bg-surface-2 px-3 py-2 text-sm text-foreground shadow-sm placeholder:text-muted/70 focus:border-violet-400/50 focus:outline-none focus:ring-2 focus:ring-violet-400/20"
         />
         <Button onClick={submit} disabled={mutation.isPending}>
           {mutation.isPending ? "Interpretando…" : "Aplicar"}
@@ -57,7 +64,7 @@ export function ConversationalFilter() {
       </div>
 
       {!result && (
-        <p className="mt-2 text-xs text-slate-400">
+        <p className="mt-2 text-xs text-muted">
           Ejemplos: {EXAMPLES.map((e) => `«${e}»`).join(" · ")}
         </p>
       )}
@@ -71,7 +78,7 @@ export function ConversationalFilter() {
               </Badge>
             ))
           ) : (
-            <span className="text-xs text-slate-400">
+            <span className="text-xs text-muted">
               No se reconoció ningún filtro. Prueba con un canal, modelo u origen.
             </span>
           )}
