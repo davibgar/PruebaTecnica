@@ -16,6 +16,7 @@ import {
   CampaignDrilldown,
   CampaignReportRow,
   DashboardMetrics,
+  DashboardOverview,
   DrilldownSale,
   DrilldownTouchpoint,
 } from './dashboard.types';
@@ -41,8 +42,23 @@ export class DashboardService {
     private readonly campaigns: Repository<Campaign>,
     @InjectRepository(Touchpoint)
     private readonly touchpoints: Repository<Touchpoint>,
+    @InjectRepository(Contact)
+    private readonly contacts: Repository<Contact>,
+    @InjectRepository(Sale)
+    private readonly sales: Repository<Sale>,
     private readonly config: ConfigService,
   ) {}
+
+  /** Resumen del dataset del negocio (conteos reales para el encabezado). */
+  async getOverview(businessId: string): Promise<DashboardOverview> {
+    const [contacts, touchpoints, sales, campaigns] = await Promise.all([
+      this.contacts.countBy({ businessId }),
+      this.touchpoints.countBy({ businessId }),
+      this.sales.countBy({ businessId }),
+      this.campaigns.countBy({ businessId }),
+    ]);
+    return { businessId, contacts, touchpoints, sales, campaigns };
+  }
 
   async getMetrics(
     businessId: string,

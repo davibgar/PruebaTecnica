@@ -22,6 +22,7 @@ import {
   CampaignDrilldown,
   CampaignReportRow,
   DashboardMetrics,
+  DashboardOverview,
   ParsedFilters,
 } from './dashboard.types';
 
@@ -32,6 +33,12 @@ export class DashboardController {
     private readonly exporter: ReportExporter,
     private readonly filterParser: FilterParserService,
   ) {}
+
+  /** Resumen del dataset del negocio (conteos reales). */
+  @Get('overview')
+  getOverview(@BusinessId() businessId: string): Promise<DashboardOverview> {
+    return this.dashboard.getOverview(businessId);
+  }
 
   /** Seis métricas core del dashboard de entrada. */
   @Get('metrics')

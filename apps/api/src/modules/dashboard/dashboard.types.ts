@@ -1,5 +1,14 @@
 import { AudienceOrigin } from '../../common/enums/audience-origin.enum';
 
+/** Resumen del dataset del negocio (conteos reales). */
+export interface DashboardOverview {
+  businessId: string;
+  contacts: number;
+  touchpoints: number;
+  sales: number;
+  campaigns: number;
+}
+
 /** Seis métricas core del dashboard de entrada (valores blended). */
 export interface DashboardMetrics {
   /** Ingreso real atribuido (POS). */
