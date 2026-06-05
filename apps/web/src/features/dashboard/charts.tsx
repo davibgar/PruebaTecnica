@@ -160,12 +160,14 @@ function OriginDonut({ rows }: { rows: AudienceOriginPerformance[] }) {
 
   return (
     <div className="donut-wrap">
-      <div className="donut">
-        <div style={{ position: "absolute", inset: 0, borderRadius: "50%", background: total > 1 ? `conic-gradient(${grad})` : "var(--surface-2)" }} />
-        <div style={{ position: "absolute", inset: 16, borderRadius: "50%", background: "var(--surface)" }} />
-        <div className="donut-center">
-          <div className="dc-val">{formatCopShort(total > 1 ? total : 0)}</div>
-          <div className="dc-lbl">Ingreso real</div>
+      <div className="donut-block">
+        <div className="donut">
+          <div style={{ position: "absolute", inset: 0, borderRadius: "50%", background: total > 1 ? `conic-gradient(${grad})` : "var(--surface-2)" }} />
+          <div style={{ position: "absolute", inset: 16, borderRadius: "50%", background: "var(--surface)" }} />
+        </div>
+        <div className="donut-total">
+          <div className="dt-val">{formatCopShort(total > 1 ? total : 0)}</div>
+          <div className="dt-lbl">Ingreso real</div>
         </div>
       </div>
       <div className="origin-rows">

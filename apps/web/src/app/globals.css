@@ -255,9 +255,10 @@ h1, h2, h3, p { margin: 0; }
 /* donut / origin */
 .donut-wrap { display: flex; align-items: center; gap: 22px; }
 .donut { position: relative; width: 132px; height: 132px; flex: none; }
-.donut-center { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; }
-.donut-center .dc-val { font-size: 18px; font-weight: 800; letter-spacing: -.02em; }
-.donut-center .dc-lbl { font-size: 10px; color: var(--text-3); font-weight: 700; text-transform: uppercase; letter-spacing: .05em; }
+.donut-block { display: flex; flex-direction: column; align-items: center; gap: 12px; flex: none; }
+.donut-total { text-align: center; }
+.donut-total .dt-val { font-size: 19px; font-weight: 800; letter-spacing: -.02em; }
+.donut-total .dt-lbl { font-size: 10px; color: var(--text-3); font-weight: 700; text-transform: uppercase; letter-spacing: .05em; margin-top: 2px; }
 .origin-rows { flex: 1; display: flex; flex-direction: column; gap: 10px; }
 .origin-row { display: grid; grid-template-columns: 1fr auto; gap: 4px 10px; align-items: center; }
 .origin-name { display: flex; align-items: center; gap: 8px; font-size: 12.5px; font-weight: 700; }
