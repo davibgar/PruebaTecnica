@@ -6,11 +6,16 @@ import {
   getCampaignDrilldown,
   getCampaigns,
   getMetrics,
+  getOverview,
 } from "@/lib/api/dashboard";
 import { queryKeys } from "@/lib/query-keys";
 import type { ReportFilter } from "@/lib/types";
 
 /** Hooks de lectura del dashboard. Cada uno se invalida por su clave + filtros. */
+
+export function useOverview() {
+  return useQuery({ queryKey: ["overview"], queryFn: getOverview });
+}
 
 export function useMetrics(filter: ReportFilter) {
   return useQuery({

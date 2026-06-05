@@ -7,6 +7,7 @@ import { Charts } from "./charts";
 import { CommandBar } from "./command-bar";
 import { FiltersBar } from "./filters-bar";
 import { Metrics } from "./metrics";
+import { useOverview } from "./queries";
 import { ReconTable } from "./recon-table";
 import { Sidebar } from "./sidebar";
 import { ACCENTS, Tweaks, type Density } from "./tweaks";
@@ -18,6 +19,7 @@ import { ACCENTS, Tweaks, type Density } from "./tweaks";
 export function DashboardPage() {
   const [accent, setAccent] = useState("Esmeralda");
   const [density, setDensity] = useState<Density>("balanced");
+  const overview = useOverview();
 
   useEffect(() => {
     const root = document.documentElement;
@@ -41,8 +43,9 @@ export function DashboardPage() {
               <div>
                 <h1 className="page-title">Análisis con atribución real</h1>
                 <div className="page-desc">
-                  ROAS reconciliado contra ventas POS reales · atribución multi-touch
-                  conmutable sobre datos cruzados marketing + POS
+                  ROAS reconciliado contra ventas POS reales
+                  {overview.data &&
+                    ` · ${overview.data.contacts} contactos · ${overview.data.touchpoints} touchpoints · ${overview.data.sales} ventas en ${overview.data.campaigns} campañas`}
                 </div>
               </div>
             </div>

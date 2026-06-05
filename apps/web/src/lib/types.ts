@@ -52,6 +52,14 @@ export interface ReportFilter {
 
 // --- reportes ---------------------------------------------------------------
 
+export interface DashboardOverview {
+  businessId: string;
+  contacts: number;
+  touchpoints: number;
+  sales: number;
+  campaigns: number;
+}
+
 export interface DashboardMetrics {
   attributedRevenue: number;
   totalSpend: number;

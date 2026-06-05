@@ -7,10 +7,12 @@ import { EmptyState } from "@/components/ui/states";
 import { ApiError } from "@/lib/api/client";
 import { formatDate } from "@/lib/format";
 import type { Recommendation, RecommendationType, Task } from "@/lib/types";
+import { useFilters } from "../filters/filters-context";
 import {
   useAcceptRecommendation,
   useCompleteTask,
   useDismissRecommendation,
+  useGenerateRecommendations,
   useRecommendations,
   useTasks,
 } from "./queries";
@@ -60,10 +62,23 @@ function recMetric(rec: Recommendation): { value: string; label: string } {
 }
 
 export function ActionCenter() {
+  const { f } = useFilters();
   const recsQuery = useRecommendations();
   const tasksQuery = useTasks();
+  const generate = useGenerateRecommendations();
 
   const openTasks = (tasksQuery.data ?? []).filter((t) => t.status !== "done");
+
+  const onGenerate = () =>
+    generate.mutate(f.model, {
+      onSuccess: (r) =>
+        toast.success(
+          r.created > 0
+            ? `${r.created} recomendación(es) nueva(s)`
+            : "Sin cambios · reglas ya evaluadas",
+        ),
+      onError: (e) => toast.error(errMsg(e)),
+    });
 
   return (
     <div className="section">
@@ -72,8 +87,11 @@ export function ActionCenter() {
         <span className="section-hint">Recomendaciones de IA estratégica → tasks accionables</span>
         <span className="spacer" />
         {(recsQuery.data?.length ?? 0) > 0 && (
-          <span className="count-badge">{recsQuery.data!.length} nuevas</span>
+          <span className="count-badge" style={{ marginRight: 4 }}>{recsQuery.data!.length} nuevas</span>
         )}
+        <button className="chip-reset" disabled={generate.isPending} onClick={onGenerate} style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+          <Icon name="spark" size={13} /> {generate.isPending ? "Generando…" : "Generar"}
+        </button>
       </div>
 
       <div className="ac">

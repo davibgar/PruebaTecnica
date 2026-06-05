@@ -5,10 +5,15 @@ import type {
   CampaignDrilldown,
   CampaignReportRow,
   DashboardMetrics,
+  DashboardOverview,
   ParsedFilters,
   ReportFilter,
 } from "../types";
 import { request, requestBlob, toQuery } from "./client";
+
+export function getOverview(): Promise<DashboardOverview> {
+  return request(`/dashboard/overview`);
+}
 
 /** ReportFilter → record plano para la query string. */
 export function filterToQuery(filter: ReportFilter): Record<string, string> {
