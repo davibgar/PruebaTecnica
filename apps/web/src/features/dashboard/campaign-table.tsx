@@ -9,6 +9,7 @@ import { formatCop, formatPct, formatRoas } from "@/lib/format";
 import type { CampaignReportRow } from "@/lib/types";
 import { useFilters } from "../filters/filters-context";
 import { CampaignDrilldownModal } from "./campaign-drilldown";
+import { ExportButtons } from "./export-buttons";
 import { useCampaigns } from "./queries";
 
 /**
@@ -26,6 +27,7 @@ export function CampaignTable() {
       <CardHeader
         title="Reporte por campaña"
         description="Reconciliación ROAS real (POS) vs ROAS reportado por la plataforma. Clic para ver el detalle."
+        action={<ExportButtons />}
       />
       <QueryBoundary
         query={query}
