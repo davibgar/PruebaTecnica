@@ -1,5 +1,6 @@
 "use client";
 
+import { ConversationalFilter } from "../filters/conversational-filter";
 import { FilterBar } from "../filters/filter-bar";
 import { FiltersProvider } from "../filters/filters-context";
 import { ActionCenter } from "../action-center/action-center";
@@ -27,6 +28,7 @@ export function DashboardPage() {
         </header>
 
         <div className="space-y-6">
+          <ConversationalFilter />
           <FilterBar />
           <MetricsCards />
           <DashboardCharts />
