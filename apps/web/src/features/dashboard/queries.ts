@@ -14,7 +14,7 @@ import type { ReportFilter } from "@/lib/types";
 /** Hooks de lectura del dashboard. Cada uno se invalida por su clave + filtros. */
 
 export function useOverview() {
-  return useQuery({ queryKey: ["overview"], queryFn: getOverview });
+  return useQuery({ queryKey: queryKeys.overview(), queryFn: getOverview });
 }
 
 export function useMetrics(filter: ReportFilter) {

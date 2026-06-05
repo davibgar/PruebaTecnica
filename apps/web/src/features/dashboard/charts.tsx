@@ -3,21 +3,14 @@
 import { Icon } from "@/components/ui/icon";
 import { QueryBoundary } from "@/components/ui/query-boundary";
 import { EmptyState } from "@/components/ui/states";
-import { formatCop, formatCopShort } from "@/lib/format";
-import { originLabel } from "@/lib/labels";
-import { MODEL_LABELS } from "@/lib/labels";
+import { formatCop, formatCopShort, formatRoas } from "@/lib/format";
+import { MODEL_LABELS, ORIGIN_COLOR, originLabel } from "@/lib/labels";
 import type {
   AudienceOriginPerformance,
   CampaignReportRow,
 } from "@/lib/types";
 import { useFilters } from "../filters/filters-context";
 import { useAudiencePerformance, useCampaigns } from "./queries";
-
-const ORIGIN_COLOR: Record<string, string> = {
-  fria: "var(--o-fria)",
-  warm: "var(--o-warm)",
-  base_propia: "var(--o-base_propia)",
-};
 
 export function Charts() {
   const { f, report } = useFilters();
@@ -140,11 +133,11 @@ function RoasGrouped({ rows }: { rows: CampaignReportRow[] }) {
           <div className="gpair">
             <div className="gbar">
               <div className="gtrack"><div className="gfill real" style={{ width: (r.roasReal / max) * 100 + "%" }} /></div>
-              <div className="gval" style={{ color: "var(--accent)" }}>{r.roasReal.toFixed(2)}×</div>
+              <div className="gval" style={{ color: "var(--accent)" }}>{formatRoas(r.roasReal)}</div>
             </div>
             <div className="gbar">
               <div className="gtrack"><div className="gfill plat" style={{ width: (r.roasPlatform / max) * 100 + "%" }} /></div>
-              <div className="gval" style={{ color: "var(--violet)" }}>{r.roasPlatform.toFixed(2)}×</div>
+              <div className="gval" style={{ color: "var(--violet)" }}>{formatRoas(r.roasPlatform)}</div>
             </div>
           </div>
         </div>
@@ -185,7 +178,7 @@ function OriginDonut({ rows }: { rows: AudienceOriginPerformance[] }) {
                 <span className="best-tag">mejor ROAS</span>
               )}
             </div>
-            <div className="origin-roas" style={{ color: ORIGIN_COLOR[r.audienceOrigin] }}>{r.roasReal.toFixed(2)}×</div>
+            <div className="origin-roas" style={{ color: ORIGIN_COLOR[r.audienceOrigin] }}>{formatRoas(r.roasReal)}</div>
             <div className="origin-sub">
               {formatCopShort(r.attributedRevenue)} atribuido · inv. {formatCopShort(r.proratedSpend)}
             </div>
@@ -207,7 +200,7 @@ function OriginInsight({ rows }: { rows: AudienceOriginPerformance[] }) {
         <Icon name="target" size={15} /> Insight de origen
       </div>
       <div style={{ fontSize: 19, fontWeight: 800, letterSpacing: "-.02em", marginTop: 12, textWrap: "pretty" }}>
-        <span style={{ color: "var(--accent)" }}>{originLabel(best.audienceOrigin)}</span> rinde mejor: {best.roasReal.toFixed(2)}× ROAS real
+        <span style={{ color: "var(--accent)" }}>{originLabel(best.audienceOrigin)}</span> rinde mejor: {formatRoas(best.roasReal)} ROAS real
       </div>
       <div style={{ fontSize: 13, color: "var(--text-2)", marginTop: 10, lineHeight: 1.55, textWrap: "pretty" }}>
         De {formatCop(best.attributedRevenue)} en ingreso atribuido sobre {formatCop(best.proratedSpend)} de inversión asignada. Considera reasignar presupuesto hacia este origen.

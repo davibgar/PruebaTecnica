@@ -42,15 +42,9 @@ export function formatNumber(value: number): string {
   return NUMBER.format(value);
 }
 
-/** ROAS con dos decimales y una `x`: `2.45x`. */
+/** ROAS con dos decimales y el signo `×`: `2.45×`. */
 export function formatRoas(value: number): string {
-  return `${value.toFixed(2)}x`;
-}
-
-/** Porcentaje con signo explícito: `+18.3%` / `−7.1%`. */
-export function formatPct(value: number): string {
-  const sign = value > 0 ? "+" : value < 0 ? "−" : "";
-  return `${sign}${Math.abs(value).toFixed(1)}%`;
+  return `${value.toFixed(2)}×`;
 }
 
 export function formatDate(value: string | Date): string {

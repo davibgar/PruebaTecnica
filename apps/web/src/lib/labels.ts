@@ -14,6 +14,13 @@ export const ORIGIN_LABELS: Record<AudienceOrigin, string> = {
   [AudienceOrigin.OWNED]: "Base propia",
 };
 
+/** Color por origen de audiencia (variables CSS del design system). */
+export const ORIGIN_COLOR: Record<string, string> = {
+  [AudienceOrigin.COLD]: "var(--o-fria)",
+  [AudienceOrigin.WARM]: "var(--o-warm)",
+  [AudienceOrigin.OWNED]: "var(--o-base_propia)",
+};
+
 const CHANNEL_LABELS: Record<string, string> = {
   meta: "Meta",
   google: "Google",

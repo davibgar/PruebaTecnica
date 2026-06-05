@@ -2,7 +2,13 @@
 
 import { Icon, type IconName } from "@/components/ui/icon";
 import { QueryBoundary } from "@/components/ui/query-boundary";
-import { formatCopShort, formatNumber, formatPctSigned } from "@/lib/format";
+import {
+  formatCopShort,
+  formatNumber,
+  formatPctSigned,
+  formatRoas,
+} from "@/lib/format";
+import { roasDeltaPct } from "@/lib/metrics";
 import type { DashboardMetrics } from "@/lib/types";
 import { useFilters } from "../filters/filters-context";
 import { useMetrics } from "./queries";
@@ -22,9 +28,7 @@ export function Metrics() {
 }
 
 function Grid({ m }: { m: DashboardMetrics }) {
-  const blendedDelta = m.roasPlatform
-    ? ((m.roasReal - m.roasPlatform) / m.roasPlatform) * 100
-    : 0;
+  const blendedDelta = roasDeltaPct(m.roasReal, m.roasPlatform);
 
   return (
     <div className="metrics">
@@ -33,13 +37,13 @@ function Grid({ m }: { m: DashboardMetrics }) {
       <Metric
         icon="trend"
         label="ROAS real"
-        value={`${m.roasReal.toFixed(2)}×`}
+        value={formatRoas(m.roasReal)}
         hl
         foot="vs plataforma"
         footDelta={formatPctSigned(blendedDelta, 0)}
         footDir={blendedDelta < 0 ? "down" : "up"}
       />
-      <Metric icon="scale" label="ROAS plataforma" value={`${m.roasPlatform.toFixed(2)}×`} foot="reportado por el píxel" />
+      <Metric icon="scale" label="ROAS plataforma" value={formatRoas(m.roasPlatform)} foot="reportado por el píxel" />
       <Metric icon="bag" label="Conversiones" value={formatNumber(m.conversions)} foot="ventas atribuidas" />
       <Metric icon="ticket" label="Ticket promedio" value={formatCopShort(m.averageTicket)} sm foot="por venta POS" />
     </div>

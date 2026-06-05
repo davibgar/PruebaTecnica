@@ -5,17 +5,10 @@ import { Icon } from "@/components/ui/icon";
 import { LoadingState } from "@/components/ui/states";
 import { ApiError } from "@/lib/api/client";
 import { formatCop, formatCopShort, formatDate } from "@/lib/format";
-import { originLabel } from "@/lib/labels";
-import { MODEL_LABELS } from "@/lib/labels";
+import { channelLabel, MODEL_LABELS, ORIGIN_COLOR, originLabel } from "@/lib/labels";
 import type { CampaignDrilldown } from "@/lib/types";
 import { useFilters } from "../filters/filters-context";
 import { useCampaignDrilldown } from "./queries";
-
-const ORIGIN_COLOR: Record<string, string> = {
-  fria: "var(--o-fria)",
-  warm: "var(--o-warm)",
-  base_propia: "var(--o-base_propia)",
-};
 
 /** Drawer lateral con el detalle de una campaña: ventas y touchpoints atribuidos. */
 export function DrillDrawer({
@@ -132,7 +125,7 @@ function Body({ data }: { data: CampaignDrilldown }) {
       <div>
         {touchpoints.slice(0, 20).map((t) => (
           <div className="tp-row" key={t.id} style={{ gridTemplateColumns: "auto 1fr auto" }}>
-            <span className="ch-tag">{t.channel}</span>
+            <span className="ch-tag">{channelLabel(t.channel)}</span>
             <div>
               <div className="tp-who">{t.contactExternalId}</div>
               <div className="tp-when" style={{ display: "flex", alignItems: "center", gap: 6 }}>

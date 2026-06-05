@@ -3,17 +3,13 @@
 import { useState } from "react";
 import { Icon } from "@/components/ui/icon";
 import { QueryBoundary } from "@/components/ui/query-boundary";
-import { formatCopShort, formatPctSigned } from "@/lib/format";
+import { formatCopShort, formatPctSigned, formatRoas } from "@/lib/format";
+import { roasDeltaPct } from "@/lib/metrics";
 import type { CampaignReportRow, DashboardMetrics } from "@/lib/types";
 import { useFilters } from "../filters/filters-context";
 import { DrillDrawer } from "./drill-drawer";
 import { ExportButtons } from "./export-buttons";
 import { useCampaigns, useMetrics } from "./queries";
-
-/** Δ vs plataforma = cuánto difiere el ROAS real del reportado por el píxel. */
-function deltaPct(r: { roasReal: number; roasPlatform: number }): number {
-  return r.roasPlatform ? ((r.roasReal - r.roasPlatform) / r.roasPlatform) * 100 : 0;
-}
 
 export function ReconTable() {
   const { report } = useFilters();
@@ -76,7 +72,7 @@ export function ReconTable() {
 }
 
 function Row({ r, onDrill }: { r: CampaignReportRow; onDrill: () => void }) {
-  const d = deltaPct(r);
+  const d = roasDeltaPct(r.roasReal, r.roasPlatform);
   const flagged = Math.abs(d) > 5;
   return (
     <tr onClick={onDrill}>
@@ -97,23 +93,23 @@ function Row({ r, onDrill }: { r: CampaignReportRow; onDrill: () => void }) {
       <td className="cell-mono">{formatCopShort(r.spend)}</td>
       <td className="cell-mono" style={{ color: "var(--text)" }}>{formatCopShort(r.attributedRevenue)}</td>
       <td className="cell-mono" style={{ color: "var(--text-2)" }}>{r.conversions}</td>
-      <td><span className={"pill " + (r.roasReal >= 1 ? "good" : "bad")}>{r.roasReal.toFixed(2)}×</span></td>
-      <td className="cell-mono" style={{ color: "var(--violet)" }}>{r.roasPlatform.toFixed(2)}×</td>
+      <td><span className={"pill " + (r.roasReal >= 1 ? "good" : "bad")}>{formatRoas(r.roasReal)}</span></td>
+      <td className="cell-mono" style={{ color: "var(--violet)" }}>{formatRoas(r.roasPlatform)}</td>
       <td><span className={"pill " + (Math.abs(d) <= 5 ? "flat" : d < 0 ? "bad" : "good")}>{formatPctSigned(d, 0)}</span></td>
     </tr>
   );
 }
 
 function FootRow({ rows, m }: { rows: CampaignReportRow[]; m: DashboardMetrics }) {
-  const d = deltaPct(m);
+  const d = roasDeltaPct(m.roasReal, m.roasPlatform);
   return (
     <tr className="foot">
       <td>Blended ({rows.length} campañas)</td>
       <td className="cell-mono">{formatCopShort(m.totalSpend)}</td>
       <td className="cell-mono">{formatCopShort(m.attributedRevenue)}</td>
       <td className="cell-mono">{m.conversions}</td>
-      <td><span className={"pill " + (m.roasReal >= 1 ? "good" : "bad")}>{m.roasReal.toFixed(2)}×</span></td>
-      <td className="cell-mono" style={{ color: "var(--violet)" }}>{m.roasPlatform.toFixed(2)}×</td>
+      <td><span className={"pill " + (m.roasReal >= 1 ? "good" : "bad")}>{formatRoas(m.roasReal)}</span></td>
+      <td className="cell-mono" style={{ color: "var(--violet)" }}>{formatRoas(m.roasPlatform)}</td>
       <td><span className={"pill " + (Math.abs(d) <= 5 ? "flat" : d < 0 ? "bad" : "good")}>{formatPctSigned(d, 0)}</span></td>
     </tr>
   );

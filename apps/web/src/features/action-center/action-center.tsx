@@ -5,7 +5,7 @@ import { Icon, type IconName } from "@/components/ui/icon";
 import { QueryBoundary } from "@/components/ui/query-boundary";
 import { EmptyState } from "@/components/ui/states";
 import { ApiError } from "@/lib/api/client";
-import { formatDate } from "@/lib/format";
+import { formatDate, formatRoas } from "@/lib/format";
 import type { Recommendation, RecommendationType, Task } from "@/lib/types";
 import { useFilters } from "../filters/filters-context";
 import {
@@ -58,7 +58,7 @@ function recMetric(rec: Recommendation): { value: string; label: string } {
   if (rec.type === "review_reconciliation") {
     return { value: `${Math.round(ctx.reconciliationDiffPct ?? 0)}%`, label: "Reconciliación" };
   }
-  return { value: `${(ctx.roasReal ?? 0).toFixed(2)}×`, label: "ROAS real" };
+  return { value: formatRoas(ctx.roasReal ?? 0), label: "ROAS real" };
 }
 
 export function ActionCenter() {

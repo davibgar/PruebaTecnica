@@ -5,6 +5,7 @@ import { useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { recompute } from "@/lib/api/attribution";
 import { getCampaigns } from "@/lib/api/dashboard";
+import { queryKeys } from "@/lib/query-keys";
 import { AttributionModel } from "@/lib/types";
 import { useFilters } from "../filters/filters-context";
 
@@ -31,7 +32,7 @@ export function FiltersBar() {
 
   // Lista de campañas para el dropdown (todas las del negocio, sin filtrar).
   const campaignsQuery = useQuery({
-    queryKey: ["campaign-options", f.model],
+    queryKey: queryKeys.campaignOptions(f.model),
     queryFn: () => getCampaigns({ model: f.model }),
   });
 
