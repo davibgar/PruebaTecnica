@@ -50,5 +50,27 @@ services:
     ports:
       - '${API_HOST_PORT:-3001}:3001'
 
+  web:
+    build:
+      context: ./apps/web
+      target: development # imagen con next dev para hot-reload
+    container_name: nodotech_web
+    restart: unless-stopped
+    depends_on:
+      - api
+    environment:
+      # NEXT_PUBLIC_* corre en el NAVEGADOR (host), así que la API se alcanza por
+      # localhost y el puerto publicado, no por el nombre de servicio de Docker.
+      NEXT_PUBLIC_API_URL: http://localhost:${API_HOST_PORT:-3001}/api
+      NEXT_PUBLIC_BUSINESS_ID: 11111111-1111-1111-1111-111111111111
+      # Polling del watcher: los montajes desde Windows no propagan eventos fs.
+      WATCHPACK_POLLING: 'true'
+    volumes:
+      # Hot-reload del código fuente; node_modules y .next quedan en la imagen.
+      - ./apps/web/src:/app/src
+      - ./apps/web/public:/app/public
+    ports:
+      - '${WEB_HOST_PORT:-3000}:3000'
+
 volumes:
   nodotech_pgdata:

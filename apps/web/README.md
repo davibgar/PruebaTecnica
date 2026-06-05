@@ -9,6 +9,18 @@ NodoTech (modo oscuro, acento esmeralda).
 
 ## 1. Arranque
 
+### Opción A — Todo en Docker (recomendado)
+
+Desde la **raíz del repo**, `docker compose up -d --build` levanta Postgres + API
++ **este frontend** juntos. Luego carga el seed y abre http://localhost:3000:
+
+```bash
+docker compose up -d --build
+docker compose exec api npm run seed
+```
+
+### Opción B — Frontend en el host
+
 Requisitos: Node 20+ y el **backend corriendo con el seed cargado**
 (ver `apps/api/README.md`). El frontend lee del negocio demo por el header
 `x-business-id`.

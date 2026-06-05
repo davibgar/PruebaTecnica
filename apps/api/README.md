@@ -11,14 +11,15 @@ Requisitos: **Docker** (recomendado) o Node 20+ con un PostgreSQL local.
 
 ### Opción A — Todo en Docker, con hot-reload (recomendado)
 
-Levanta PostgreSQL + API con un solo comando, desde la raíz del repo:
+Levanta PostgreSQL + API + **frontend** con un solo comando, desde la raíz del repo:
 
 ```bash
 docker compose up -d --build
-# Si ya tienes un Postgres ocupando el 5432:
-#   POSTGRES_HOST_PORT=5433 docker compose up -d --build
+# Si ya tienes puertos ocupados, puedes reasignar los del host:
+#   POSTGRES_HOST_PORT=5433 API_HOST_PORT=3001 WEB_HOST_PORT=3000 docker compose up -d --build
 ```
 
+- **Frontend:** http://localhost:3000
 - **API:** http://localhost:3001/api
 
 Carga los datos de demostración (seed):
@@ -27,16 +28,21 @@ Carga los datos de demostración (seed):
 docker compose exec api npm run seed
 ```
 
-La API arranca aplicando las migraciones (no usa `synchronize`) y queda en modo
-**watch**: el código de `apps/api/src` se monta en el contenedor, así que editar
-en tu host recompila dentro del contenedor automáticamente. Dentro de la red de
-Docker la API llega a Postgres por el nombre del servicio (`postgres:5432`), no
-por localhost.
+API y web arrancan en modo **watch**: el código de `apps/api/src` y `apps/web/src`
+se monta en sus contenedores, así que editar en tu host recompila dentro del
+contenedor. La API aplica las migraciones al arrancar (no usa `synchronize`) y,
+dentro de la red de Docker, llega a Postgres por el nombre del servicio
+(`postgres:5432`). El frontend corre en el navegador del host, así que alcanza la
+API por `localhost:3001` (el puerto publicado), no por el nombre de servicio.
 
-Para una **imagen de producción** (compilada, sin dev-deps):
+> La primera carga del frontend puede tardar unos segundos (Next compila bajo
+> demanda en modo dev).
+
+Para **imágenes de producción** (compiladas, sin dev-deps):
 
 ```bash
 docker build --target runner -t nodotech-api ./apps/api
+docker build --target runner -t nodotech-web ./apps/web
 ```
 
 ### Opción B — API en el host (sin Docker para la app)
