@@ -20,7 +20,7 @@ export function Charts() {
   return (
     <>
       <div className="section grid-2">
-        <div className="card">
+        <div className="card chart-card">
           <div className="card-head">
             <div>
               <div className="card-title">Ingreso por campaña</div>
@@ -29,31 +29,35 @@ export function Charts() {
               </div>
             </div>
           </div>
-          <QueryBoundary
-            query={campaigns}
-            skeleton={<BarsSkeleton />}
-            isEmpty={(r) => r.length === 0}
-            emptyTitle="Sin ingreso atribuido"
-          >
-            {(rows) => <BarByCampaign rows={rows} />}
-          </QueryBoundary>
+          <div className="chart-body">
+            <QueryBoundary
+              query={campaigns}
+              skeleton={<BarsSkeleton />}
+              isEmpty={(r) => r.length === 0}
+              emptyTitle="Sin ingreso atribuido"
+            >
+              {(rows) => <BarByCampaign rows={rows} />}
+            </QueryBoundary>
+          </div>
         </div>
 
-        <div className="card">
+        <div className="card chart-card">
           <div className="card-head">
             <div>
               <div className="card-title">ROAS real vs plataforma</div>
               <div className="card-sub">La diferencia con Meta, a la vista</div>
             </div>
           </div>
-          <QueryBoundary
-            query={campaigns}
-            skeleton={<BarsSkeleton />}
-            isEmpty={(r) => r.length === 0}
-            emptyTitle="Sin datos de ROAS"
-          >
-            {(rows) => <RoasGrouped rows={rows} />}
-          </QueryBoundary>
+          <div className="chart-body">
+            <QueryBoundary
+              query={campaigns}
+              skeleton={<BarsSkeleton />}
+              isEmpty={(r) => r.length === 0}
+              emptyTitle="Sin datos de ROAS"
+            >
+              {(rows) => <RoasGrouped rows={rows} />}
+            </QueryBoundary>
+          </div>
         </div>
       </div>
 
