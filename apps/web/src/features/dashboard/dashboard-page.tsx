@@ -1,5 +1,6 @@
 "use client";
 
+import { Reveal } from "@/components/ui/reveal";
 import { ActionCenter } from "../action-center/action-center";
 import { ConversationalFilter } from "../filters/conversational-filter";
 import { FilterBar } from "../filters/filter-bar";
@@ -30,13 +31,27 @@ export function DashboardPage() {
         </header>
 
         <div className="space-y-6">
-          <ConversationalFilter />
-          <FilterBar />
-          <MetricsCards />
-          <DashboardCharts />
-          <CampaignTable />
-          <AudiencePerformance />
-          <ActionCenter />
+          <Reveal delay={0}>
+            <ConversationalFilter />
+          </Reveal>
+          <Reveal delay={0.05}>
+            <FilterBar />
+          </Reveal>
+          <Reveal delay={0.1}>
+            <MetricsCards />
+          </Reveal>
+          <Reveal delay={0.15}>
+            <DashboardCharts />
+          </Reveal>
+          <Reveal delay={0.2}>
+            <CampaignTable />
+          </Reveal>
+          <Reveal delay={0.25}>
+            <AudiencePerformance />
+          </Reveal>
+          <Reveal delay={0.3}>
+            <ActionCenter />
+          </Reveal>
         </div>
       </div>
     </FiltersProvider>
