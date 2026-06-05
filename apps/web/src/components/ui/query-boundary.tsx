@@ -11,6 +11,7 @@ export function QueryBoundary<T>({
   query,
   children,
   loadingLabel,
+  skeleton,
   isEmpty,
   emptyTitle,
   emptyDescription,
@@ -18,12 +19,14 @@ export function QueryBoundary<T>({
   query: UseQueryResult<T>;
   children: (data: T) => ReactNode;
   loadingLabel?: string;
+  /** Placeholder de carga a medida; si se omite, usa el spinner genérico. */
+  skeleton?: ReactNode;
   isEmpty?: (data: T) => boolean;
   emptyTitle?: string;
   emptyDescription?: string;
 }) {
   if (query.isPending) {
-    return <LoadingState label={loadingLabel} />;
+    return skeleton ? <>{skeleton}</> : <LoadingState label={loadingLabel} />;
   }
   if (query.isError) {
     const message =
