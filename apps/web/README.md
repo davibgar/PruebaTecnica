@@ -55,10 +55,11 @@ npm run dev                    # http://localhost:3000
 ## 2. Arquitectura
 
 Stack: **Next.js 16 (App Router)** · **React 19** · **TypeScript** ·
-**TanStack Query** (estado de servidor) · **sonner** (toasts). La capa visual es
-un **design system propio en CSS** (sin framework de utilidades), portado del
-bundle de [Claude Design](https://claude.ai/design): tokens en OKLCH, tipografía
-**Manrope** + **Geist Mono**, modo oscuro con acento esmeralda.
+**TanStack Query** (estado de servidor) · **Recharts** (gráficos) · **sonner**
+(toasts). La capa visual es un **design system propio en CSS** (sin framework de
+utilidades), portado del bundle de [Claude Design](https://claude.ai/design):
+tokens en OKLCH, tipografía **Manrope** + **Geist Mono**, modo oscuro con acento
+esmeralda.
 
 ### 2.1 Organización (feature-based, espeja los dominios del backend)
 
@@ -121,9 +122,10 @@ Action Center invalidan las claves afectadas y disparan un toast.
 
 ### 2.5 Gráficos y reportes
 
-Barras horizontales (ingreso por campaña), barras agrupadas (ROAS real vs
-plataforma), **donut por origen de audiencia** (conic-gradient) con el insight del
-mejor ROAS, **tabla de reconciliación** con Δ vs plataforma (>5% resaltado) y un
+Barras horizontales (ingreso por campaña) y barras agrupadas (ROAS real vs
+plataforma) con **Recharts**, **donut por origen de audiencia** (conic-gradient,
+CSS) con el insight del mejor ROAS, **tabla de reconciliación** con Δ vs
+plataforma (>5% resaltado) y un
 **drawer de drill-down** con las ventas y touchpoints atribuidos. Export del
 reporte por campaña a **CSV/PDF** desde la cabecera de la tabla.
 

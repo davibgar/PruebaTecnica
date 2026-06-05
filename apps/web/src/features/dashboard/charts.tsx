@@ -1,8 +1,20 @@
 "use client";
 
-import { Icon } from "@/components/ui/icon";
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  LabelList,
+  Legend,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 import { QueryBoundary } from "@/components/ui/query-boundary";
 import { EmptyState } from "@/components/ui/states";
+import { Icon } from "@/components/ui/icon";
 import { formatCop, formatCopShort, formatRoas } from "@/lib/format";
 import { MODEL_LABELS, ORIGIN_COLOR, originLabel } from "@/lib/labels";
 import type {
@@ -11,6 +23,27 @@ import type {
 } from "@/lib/types";
 import { useFilters } from "../filters/filters-context";
 import { useAudiencePerformance, useCampaigns } from "./queries";
+
+const AXIS_TICK = { fontSize: 12, fill: "var(--text-2)", fontWeight: 700 };
+const TOOLTIP = {
+  contentStyle: {
+    background: "var(--surface-2)",
+    border: "1px solid var(--border-2)",
+    borderRadius: 12,
+    boxShadow: "var(--shadow-lg)",
+  },
+  labelStyle: { color: "var(--text)", fontWeight: 700, marginBottom: 4 },
+  itemStyle: { color: "var(--text-2)" },
+  cursor: { fill: "rgba(255,255,255,0.04)" },
+} as const;
+
+/** Nombre corto para el eje; el completo va en el tooltip. */
+function shortName(name: string): string {
+  const head = name.split("—")[0].trim();
+  return head.length > 16 ? `${head.slice(0, 15)}…` : head;
+}
+const fullName = (_: unknown, p?: ReadonlyArray<{ payload?: { full?: string } }>) =>
+  p?.[0]?.payload?.full ?? "";
 
 export function Charts() {
   const { f, report } = useFilters();
@@ -32,11 +65,11 @@ export function Charts() {
           <div className="chart-body">
             <QueryBoundary
               query={campaigns}
-              skeleton={<BarsSkeleton />}
+              skeleton={<ChartSkeleton />}
               isEmpty={(r) => r.length === 0}
               emptyTitle="Sin ingreso atribuido"
             >
-              {(rows) => <BarByCampaign rows={rows} />}
+              {(rows) => <RevenueChart rows={rows} />}
             </QueryBoundary>
           </div>
         </div>
@@ -51,11 +84,11 @@ export function Charts() {
           <div className="chart-body">
             <QueryBoundary
               query={campaigns}
-              skeleton={<BarsSkeleton />}
+              skeleton={<ChartSkeleton />}
               isEmpty={(r) => r.length === 0}
               emptyTitle="Sin datos de ROAS"
             >
-              {(rows) => <RoasGrouped rows={rows} />}
+              {(rows) => <RoasChart rows={rows} />}
             </QueryBoundary>
           </div>
         </div>
@@ -99,57 +132,87 @@ export function Charts() {
   );
 }
 
-function BarByCampaign({ rows }: { rows: CampaignReportRow[] }) {
-  const sorted = [...rows].sort((a, b) => b.attributedRevenue - a.attributedRevenue);
-  const max = Math.max(1, ...sorted.map((r) => r.attributedRevenue));
+/* ===== Recharts: ingreso por campaña (barras horizontales) ============= */
+function RevenueChart({ rows }: { rows: CampaignReportRow[] }) {
+  const data = [...rows]
+    .sort((a, b) => b.attributedRevenue - a.attributedRevenue)
+    .map((r) => ({
+      name: shortName(r.name),
+      full: r.name,
+      value: r.attributedRevenue,
+      flagged: r.flagged,
+    }));
+
   return (
-    <div>
-      {sorted.map((r) => (
-        <div className="barrow" key={r.campaignId}>
-          <div className="name" title={r.name}>{r.name}</div>
-          <div className="bartrack">
-            <div className="barfill" style={{ width: (r.attributedRevenue / max) * 100 + "%" }} />
-          </div>
-          <div className="amt">{formatCopShort(r.attributedRevenue)}</div>
-        </div>
-      ))}
-    </div>
+    <ResponsiveContainer width="100%" height={250}>
+      <BarChart layout="vertical" data={data} margin={{ top: 4, right: 56, bottom: 4, left: 4 }}>
+        <CartesianGrid horizontal={false} stroke="var(--border)" strokeDasharray="3 3" />
+        <XAxis type="number" hide domain={[0, "dataMax"]} />
+        <YAxis type="category" dataKey="name" width={118} tick={AXIS_TICK} tickLine={false} axisLine={false} />
+        <Tooltip
+          formatter={(v) => [formatCop(Number(v)), "Atribuido"]}
+          labelFormatter={fullName}
+          {...TOOLTIP}
+        />
+        <Bar dataKey="value" radius={[0, 6, 6, 0]} barSize={22}>
+          {data.map((d, i) => (
+            <Cell key={i} className={d.flagged ? "fill-amber" : "fill-accent"} />
+          ))}
+          <LabelList
+            dataKey="value"
+            position="right"
+            formatter={(v: number) => formatCopShort(Number(v))}
+            style={{ fill: "var(--text)", fontSize: 12, fontWeight: 700 }}
+          />
+        </Bar>
+      </BarChart>
+    </ResponsiveContainer>
   );
 }
 
-function RoasGrouped({ rows }: { rows: CampaignReportRow[] }) {
-  const max = Math.max(1, ...rows.flatMap((r) => [r.roasReal, r.roasPlatform]));
+/* ===== Recharts: ROAS real vs plataforma (barras agrupadas) ============ */
+function RoasChart({ rows }: { rows: CampaignReportRow[] }) {
+  const data = rows.map((r) => ({
+    name: shortName(r.name),
+    full: r.name,
+    real: r.roasReal,
+    plataforma: r.roasPlatform,
+  }));
+
   return (
-    <div>
-      <div className="legend" style={{ marginBottom: 6 }}>
-        <span className="legend-item">
-          <span className="legend-dot" style={{ background: "var(--accent)" }} /> ROAS real (POS)
-        </span>
-        <span className="legend-item">
-          <span className="legend-dot" style={{ background: "var(--violet)" }} /> ROAS plataforma (píxel)
-        </span>
-      </div>
-      {rows.map((r) => (
-        <div className="grow" key={r.campaignId}>
-          <div className="name" title={r.name} style={{ fontSize: 12.5, fontWeight: 700, color: "var(--text-2)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-            {r.name}
-          </div>
-          <div className="gpair">
-            <div className="gbar">
-              <div className="gtrack"><div className="gfill real" style={{ width: (r.roasReal / max) * 100 + "%" }} /></div>
-              <div className="gval" style={{ color: "var(--accent)" }}>{formatRoas(r.roasReal)}</div>
-            </div>
-            <div className="gbar">
-              <div className="gtrack"><div className="gfill plat" style={{ width: (r.roasPlatform / max) * 100 + "%" }} /></div>
-              <div className="gval" style={{ color: "var(--violet)" }}>{formatRoas(r.roasPlatform)}</div>
-            </div>
-          </div>
-        </div>
-      ))}
-    </div>
+    <ResponsiveContainer width="100%" height={250}>
+      <BarChart layout="vertical" data={data} margin={{ top: 4, right: 48, bottom: 4, left: 4 }} barGap={2}>
+        <CartesianGrid horizontal={false} stroke="var(--border)" strokeDasharray="3 3" />
+        <XAxis type="number" hide domain={[0, "dataMax"]} />
+        <YAxis type="category" dataKey="name" width={118} tick={AXIS_TICK} tickLine={false} axisLine={false} />
+        <Tooltip
+          formatter={(v, name) => [
+            formatRoas(Number(v)),
+            name === "real" ? "ROAS real" : "ROAS plataforma",
+          ]}
+          labelFormatter={fullName}
+          {...TOOLTIP}
+        />
+        <Legend
+          formatter={(v) => (
+            <span style={{ color: "var(--text-2)" }}>
+              {v === "real" ? "ROAS real (POS)" : "ROAS plataforma (píxel)"}
+            </span>
+          )}
+          wrapperStyle={{ fontSize: 11.5 }}
+        />
+        <Bar dataKey="real" className="fill-accent" barSize={9} radius={[0, 4, 4, 0]}>
+          <LabelList dataKey="real" position="right" formatter={(v: number) => formatRoas(Number(v))} style={{ fill: "var(--text-2)", fontSize: 10.5, fontWeight: 700 }} />
+        </Bar>
+        <Bar dataKey="plataforma" className="fill-violet" barSize={9} radius={[0, 4, 4, 0]}>
+          <LabelList dataKey="plataforma" position="right" formatter={(v: number) => formatRoas(Number(v))} style={{ fill: "var(--text-2)", fontSize: 10.5, fontWeight: 700 }} />
+        </Bar>
+      </BarChart>
+    </ResponsiveContainer>
   );
 }
 
+/* ===== Donut por origen (conic-gradient, CSS) ========================== */
 function OriginDonut({ rows }: { rows: AudienceOriginPerformance[] }) {
   const total = rows.reduce((s, r) => s + r.attributedRevenue, 0) || 1;
   const best = rows.find((r) => r.attributedRevenue > 0);
@@ -215,14 +278,13 @@ function OriginInsight({ rows }: { rows: AudienceOriginPerformance[] }) {
   );
 }
 
-function BarsSkeleton() {
+function ChartSkeleton() {
   return (
-    <div>
+    <div style={{ display: "flex", flexDirection: "column", gap: 14, padding: "12px 0" }}>
       {Array.from({ length: 4 }).map((_, i) => (
-        <div className="barrow" key={i}>
-          <div className="skel" style={{ height: 12, width: 100 }} />
-          <div className="skel" style={{ height: 26 }} />
-          <div className="skel" style={{ height: 12, width: 60 }} />
+        <div key={i} style={{ display: "grid", gridTemplateColumns: "110px 1fr", gap: 12, alignItems: "center" }}>
+          <div className="skel" style={{ height: 12 }} />
+          <div className="skel" style={{ height: 22 }} />
         </div>
       ))}
     </div>
