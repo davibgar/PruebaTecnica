@@ -4,11 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getCampaigns } from "@/lib/api/dashboard";
 import { MODEL_LABELS, ORIGIN_LABELS } from "@/lib/labels";
 import { queryKeys } from "@/lib/query-keys";
-import {
-  AttributionModel,
-  AudienceOrigin,
-  type ReportFilter,
-} from "@/lib/types";
+import { AttributionModel, AudienceOrigin } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Select, type SelectOption } from "@/components/ui/select";
 import { useFilters } from "./filters-context";
