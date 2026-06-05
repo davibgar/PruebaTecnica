@@ -7,6 +7,7 @@ import { formatCopShort, formatPctSigned } from "@/lib/format";
 import type { CampaignReportRow, DashboardMetrics } from "@/lib/types";
 import { useFilters } from "../filters/filters-context";
 import { DrillDrawer } from "./drill-drawer";
+import { ExportButtons } from "./export-buttons";
 import { useCampaigns, useMetrics } from "./queries";
 
 /** Δ vs plataforma = cuánto difiere el ROAS real del reportado por el píxel. */
@@ -28,9 +29,10 @@ export function ReconTable() {
         <span className="section-title">Reconciliación por campaña</span>
         <span className="section-hint">Δ &gt; 5% resaltado · clic para drill-down</span>
         <span className="spacer" />
-        <span className="legend-item" style={{ fontSize: 11.5, color: "var(--text-3)" }}>
+        <span className="legend-item" style={{ fontSize: 11.5, color: "var(--text-3)", marginRight: 6 }}>
           <span className="flagdot" style={{ marginLeft: 0 }} /> reconciliación &gt; 5%
         </span>
+        <ExportButtons />
       </div>
 
       <div className="tablecard">

@@ -2,7 +2,8 @@
 
 Dashboard del sub-módulo **07 · Análisis** en **Next.js (App Router) + React +
 TypeScript**. Consume la API NestJS y muestra atribución multi-touch, ROAS real
-reconciliado contra POS y el Action Center.
+reconciliado contra POS y el Action Center, con una UI fiel al design system de
+NodoTech (modo oscuro, acento esmeralda).
 
 ---
 
@@ -19,8 +20,8 @@ npm run dev                    # http://localhost:3000
 ```
 
 > El backend debe estar en `http://localhost:3001/api` (o ajusta
-> `NEXT_PUBLIC_API_URL`). Sin backend, la UI muestra estados de error con botón
-> de reintento.
+> `NEXT_PUBLIC_API_URL`). Sin backend, cada sección muestra su estado de error
+> con botón de reintento.
 
 ### Variables de entorno
 
@@ -30,7 +31,6 @@ npm run dev                    # http://localhost:3000
 | `NEXT_PUBLIC_BUSINESS_ID` | Negocio demo enviado en `x-business-id`. | `11111111-1111-1111-1111-111111111111` |
 
 ### Scripts
-
 | Script | Qué hace |
 |---|---|
 | `npm run dev` | Servidor de desarrollo |
@@ -43,97 +43,102 @@ npm run dev                    # http://localhost:3000
 ## 2. Arquitectura
 
 Stack: **Next.js 16 (App Router)** · **React 19** · **TypeScript** ·
-**Tailwind v4** · **TanStack Query** (estado de servidor) · **Recharts**
-(gráficos).
+**TanStack Query** (estado de servidor) · **sonner** (toasts). La capa visual es
+un **design system propio en CSS** (sin framework de utilidades), portado del
+bundle de [Claude Design](https://claude.ai/design): tokens en OKLCH, tipografía
+**Manrope** + **Geist Mono**, modo oscuro con acento esmeralda.
 
 ### 2.1 Organización (feature-based, espeja los dominios del backend)
 
 ```
 src/
 ├─ app/
-│  ├─ layout.tsx          Fuentes, metadata y <Providers>
+│  ├─ layout.tsx          Fuentes (Manrope/Geist Mono), Toaster, Providers
 │  ├─ providers.tsx       QueryClientProvider (React Query)
+│  ├─ globals.css         Design system completo (tokens + componentes)
 │  └─ page.tsx            Renderiza el dashboard
 │
 ├─ lib/                   Sin estado de UI: datos y utilidades puras
-│  ├─ api/
-│  │  ├─ client.ts        fetch único: URL base + header x-business-id + errores
-│  │  ├─ dashboard.ts     métricas, campañas, drill-down, origen, export, parser
-│  │  ├─ attribution.ts   recompute
-│  │  └─ action-center.ts recomendaciones y tasks
-│  ├─ types.ts            Tipos que espejan los DTOs del backend (fuente de verdad)
-│  ├─ format.ts           Moneda COP, porcentajes, ROAS, fechas
-│  ├─ labels.ts           Enums → etiquetas legibles
-│  ├─ query-keys.ts       Claves de React Query centralizadas
-│  └─ cn.ts               Une clases condicionales
+│  ├─ api/                fetch único (URL base + x-business-id) y un módulo por dominio
+│  ├─ types.ts            Tipos que espejan los DTOs del backend
+│  ├─ format.ts           COP (largo y corto), porcentajes, ROAS, fechas
+│  ├─ labels.ts           Enums → etiquetas
+│  └─ query-keys.ts       Claves de React Query
 │
-├─ components/ui/         Primitivas presentacionales sin lógica de dominio
-│  ├─ card · badge · button · select · modal
+├─ components/ui/         Primitivas presentacionales
+│  ├─ icon.tsx            Iconos SVG (stroke) del design system
 │  ├─ states.tsx          Spinner / Loading / Empty / Error
-│  └─ query-boundary.tsx  Unifica loading/error/empty de una query
+│  └─ query-boundary.tsx  Unifica loading/error/empty (+ skeleton) de una query
 │
-└─ features/             Una carpeta por dominio; cada una trae su UI + hooks
-   ├─ filters/            Contexto de filtros, barra manual y modo conversacional
-   ├─ dashboard/          Métricas, gráficos, tabla, drill-down, ROAS por origen, export
-   └─ action-center/      Recomendaciones y tasks (con mutaciones)
+└─ features/
+   ├─ filters/            Contexto de filtros (modelo, ventana, rango, campaña, origen)
+   ├─ dashboard/          Shell (sidebar, topbar), command bar, filtros, métricas,
+   │                      gráficos (barras + donut), tabla, drawer, tweaks, export
+   └─ action-center/      Recomendaciones (con severidad) y tasks
 ```
 
-Regla simple: **`lib` no importa de `features` ni de `components`**; las features
-componen `lib` + `components/ui`. Esto mantiene el grafo de dependencias en una
-sola dirección y los módulos testeables por separado.
+### 2.2 App shell
 
-### 2.2 Estado de servidor (TanStack Query)
+Layout de dos columnas: **sidebar** con los sub-módulos del módulo Marketing
+(solo *Análisis* activo) y un **main** con topbar (breadcrumbs + título +
+**command bar conversacional**) y el contenido. El acento de marca y la densidad
+del layout son configurables desde el panel de **Tweaks** (FAB inferior derecho).
 
-Todo dato del backend vive en React Query, no en `useState`. Cada vista declara
-su query con una clave de `query-keys.ts` que **incluye los filtros**: cambiar un
-filtro cambia la clave y refetchea solo lo que depende de él, sin recargar la
-página. Las mutaciones del Action Center invalidan las claves afectadas y la
-bandeja se refresca sola. `QueryBoundary` centraliza los estados de carga, error
-(con reintento) y vacío para no repetirlos en cada componente.
+### 2.3 Estado de servidor (TanStack Query)
 
-### 2.3 Filtros como única fuente de configuración
+Todo dato del backend vive en React Query. El **contexto de filtros**
+(`features/filters`) guarda el estado de la UI (modelo, ventana, rango, campaña,
+origen) y **deriva un `ReportFilter`** que entra en las claves de query: cambiar
+un filtro refetchea solo lo que depende de él, sin recargar. Las mutaciones del
+Action Center invalidan las claves afectadas y disparan un toast.
 
-`FiltersProvider` (contexto) guarda el `ReportFilter` activo (fechas, campaña,
-origen, modelo). Tanto la barra manual como el modo conversacional escriben ahí;
-todas las vistas leen de ahí. **El modelo de atribución es un filtro más**:
-conmutarlo recalcula el dashboard porque entra en las claves de query.
+### 2.4 Filtros que recalculan
 
-### 2.4 Modo conversacional
+- **Modelo de atribución** como segmented (Lineal · Time-decay · Position-based).
+- **Rango** (7/30/90 días) → traduce a `from`/`to`.
+- **Campaña** y **origen de audiencia** como selects nativos.
+- **Slider de ventana de atribución** (3–90 días): al moverlo, llama a
+  `POST /attribution/recompute?window=N` (debounced), recalcula los créditos en
+  el backend e invalida la cache.
+- **Command bar**: texto natural → `POST /dashboard/parse-filters` (parser de
+  reglas del backend); aplica solo lo reconocido y lo muestra con chips.
 
-El input de texto llama a `POST /dashboard/parse-filters` (parser de reglas del
-backend, sin LLM) y aplica **solo los filtros reconocidos** sobre los actuales,
-mostrando con chips qué entendió y qué no.
+### 2.5 Gráficos y reportes
 
-### 2.5 Multi-tenant
+Barras horizontales (ingreso por campaña), barras agrupadas (ROAS real vs
+plataforma), **donut por origen de audiencia** (conic-gradient) con el insight del
+mejor ROAS, **tabla de reconciliación** con Δ vs plataforma (>5% resaltado) y un
+**drawer de drill-down** con las ventas y touchpoints atribuidos. Export del
+reporte por campaña a **CSV/PDF** desde la cabecera de la tabla.
 
-`lib/api/client.ts` adjunta el header `x-business-id` en cada petición, tomado de
-`NEXT_PUBLIC_BUSINESS_ID`. El backend aísla por ese identificador.
+### 2.6 Multi-tenant
 
-### 2.6 Formato y UX
+`lib/api/client.ts` adjunta el header `x-business-id` en cada petición.
 
-- Moneda en **COP** sin decimales e idioma `es-CO` (`Intl.NumberFormat`).
-- ROAS como `x.xx` con color (verde ≥ 1, rojo < 1); diferencia % con signo.
-- Filas de campaña con reconciliación **> 5%** resaltadas en ámbar (igual que el
-  flag del backend).
-- Estados de carga, vacío y error en cada sección.
+---
 
-### 2.7 Mapa feature → endpoint
+## 3. Mapa feature → endpoint
 
 | Feature | Endpoint(s) |
 |---|---|
 | Métricas core | `GET /dashboard/metrics` |
 | Gráficos + tabla | `GET /dashboard/campaigns` |
-| Drill-down | `GET /dashboard/campaigns/:id` |
-| ROAS por origen | `GET /dashboard/audience-performance` |
+| Drill-down (drawer) | `GET /dashboard/campaigns/:id` |
+| Donut por origen | `GET /dashboard/audience-performance` |
+| Slider de ventana | `POST /attribution/recompute?window=N` |
 | Exportar | `GET /dashboard/export?format=csv\|pdf` |
-| Modo conversacional | `POST /dashboard/parse-filters` |
+| Command bar | `POST /dashboard/parse-filters` |
 | Action Center | `GET/POST/PATCH /action-center/*` |
 
 ---
 
-## 3. Qué quedaría para una siguiente iteración
+## 4. Notas y siguiente iteración
 
-- Persistir los filtros en la URL (`searchParams`) para enlaces compartibles.
-- Conmutar la **ventana de atribución** desde la UI (hoy se fija al recalcular en
-  el backend).
-- Tests de componentes (React Testing Library) sobre la tabla y el Action Center.
+- El **slider de ventana** recalcula los créditos del negocio en el backend
+  (operación global, idempotente); en producción convendría hacerlo por job/cache.
+- El drawer muestra ventas y touchpoints atribuidos; el **crédito por touchpoint
+  y por canal** (que el diseño insinúa) requiere exponerlo desde
+  `attribution_credits` en el backend — queda como mejora.
+- Persistir filtros en la URL (`searchParams`) para enlaces compartibles.
+- La iconografía usa SVGs del design system; el acento y la densidad son
+  configurables en runtime desde Tweaks.
