@@ -70,5 +70,7 @@ export async function downloadReport(
   document.body.appendChild(link);
   link.click();
   link.remove();
-  URL.revokeObjectURL(url);
+  // Revoca el blob con retraso: si el navegador muestra "guardar como" la
+  // descarga es diferida, y revocar de inmediato la cancelaría al confirmar.
+  setTimeout(() => URL.revokeObjectURL(url), 10_000);
 }
