@@ -79,10 +79,14 @@ src/
 
 ### 2.2 App shell
 
-Layout de dos columnas: **sidebar** con los sub-módulos del módulo Marketing
-(solo *Análisis* activo) y un **main** con topbar (breadcrumbs + título +
-**command bar conversacional**) y el contenido. El acento de marca y la densidad
-del layout son configurables desde el panel de **Tweaks** (FAB inferior derecho).
+Layout de dos columnas: un **sidebar** de **navegación por secciones** de la
+página (Resumen · Gráficos · Reconciliación · Action Center) con scroll suave y
+resaltado de la sección activa (scroll-spy), y un **main** con topbar
+(breadcrumbs + título + **command bar conversacional**) y el contenido. El
+encabezado muestra los **conteos reales** del dataset (`GET /dashboard/overview`)
+y el pie del sidebar el `business_id` real — nada quemado en el front. El acento
+de marca y la densidad del layout son configurables desde el panel de **Tweaks**
+(FAB inferior derecho).
 
 ### 2.3 Estado de servidor (TanStack Query)
 
@@ -121,6 +125,7 @@ reporte por campaña a **CSV/PDF** desde la cabecera de la tabla.
 
 | Feature | Endpoint(s) |
 |---|---|
+| Encabezado (conteos) + sidebar (business_id) | `GET /dashboard/overview` |
 | Métricas core | `GET /dashboard/metrics` |
 | Gráficos + tabla | `GET /dashboard/campaigns` |
 | Drill-down (drawer) | `GET /dashboard/campaigns/:id` |
