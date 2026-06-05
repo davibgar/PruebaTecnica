@@ -40,13 +40,17 @@ function DrilldownContent({ data }: { data: CampaignDrilldown }) {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap gap-4 text-sm">
+      <div className="flex flex-wrap gap-6 rounded-xl border border-border bg-surface-2/50 px-4 py-3">
         <Stat label="Inversión" value={formatCop(campaign.spend)} />
         <Stat
           label="Ingreso atribuido"
           value={formatCop(campaign.attributedRevenue)}
         />
-        <Stat label="ROAS real" value={formatRoas(campaign.roasReal)} />
+        <Stat
+          label="ROAS real"
+          value={formatRoas(campaign.roasReal)}
+          tone={campaign.roasReal >= 1 ? "positive" : "negative"}
+        />
         <Stat
           label="ROAS plataforma"
           value={formatRoas(campaign.roasPlatform)}
@@ -54,15 +58,13 @@ function DrilldownContent({ data }: { data: CampaignDrilldown }) {
       </div>
 
       <section>
-        <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
-          Touchpoints ({touchpoints.length})
-        </h3>
+        <h3 className="eyebrow mb-2">Touchpoints ({touchpoints.length})</h3>
         {touchpoints.length === 0 ? (
-          <p className="text-sm text-slate-400">Sin touchpoints en el alcance.</p>
+          <p className="text-sm text-muted">Sin touchpoints en el alcance.</p>
         ) : (
-          <div className="overflow-hidden rounded-lg border border-slate-200">
+          <div className="overflow-hidden rounded-lg border border-border">
             <table className="w-full text-sm">
-              <thead className="bg-slate-50 text-left text-xs text-slate-500">
+              <thead className="bg-surface-2 text-left text-[11px] uppercase tracking-wide text-muted">
                 <tr>
                   <Th>Contacto</Th>
                   <Th>Canal</Th>
@@ -70,17 +72,21 @@ function DrilldownContent({ data }: { data: CampaignDrilldown }) {
                   <Th>Fecha</Th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-border/60">
                 {touchpoints.map((tp) => (
                   <tr key={tp.id}>
-                    <Td className="font-mono text-xs">{tp.contactExternalId}</Td>
-                    <Td>{channelLabel(tp.channel)}</Td>
+                    <Td className="font-mono text-xs text-muted">
+                      {tp.contactExternalId}
+                    </Td>
+                    <Td className="text-foreground">
+                      {channelLabel(tp.channel)}
+                    </Td>
                     <Td>
                       <Badge tone="neutral">
                         {originLabel(tp.audienceOrigin)}
                       </Badge>
                     </Td>
-                    <Td className="text-slate-500">{formatDate(tp.occurredAt)}</Td>
+                    <Td className="text-muted">{formatDate(tp.occurredAt)}</Td>
                   </tr>
                 ))}
               </tbody>
@@ -90,17 +96,17 @@ function DrilldownContent({ data }: { data: CampaignDrilldown }) {
       </section>
 
       <section>
-        <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+        <h3 className="eyebrow mb-2">
           Ventas atribuidas ({attributedSales.length})
         </h3>
         {attributedSales.length === 0 ? (
-          <p className="text-sm text-slate-400">
+          <p className="text-sm text-muted">
             Ninguna venta atribuida a esta campaña en el alcance.
           </p>
         ) : (
-          <div className="overflow-hidden rounded-lg border border-slate-200">
+          <div className="overflow-hidden rounded-lg border border-border">
             <table className="w-full text-sm">
-              <thead className="bg-slate-50 text-left text-xs text-slate-500">
+              <thead className="bg-surface-2 text-left text-[11px] uppercase tracking-wide text-muted">
                 <tr>
                   <Th>Contacto</Th>
                   <Th>Fecha</Th>
@@ -108,13 +114,17 @@ function DrilldownContent({ data }: { data: CampaignDrilldown }) {
                   <Th className="text-right">Crédito a la campaña</Th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-border/60">
                 {attributedSales.map((s) => (
                   <tr key={s.saleId}>
-                    <Td className="font-mono text-xs">{s.contactExternalId}</Td>
-                    <Td className="text-slate-500">{formatDate(s.soldAt)}</Td>
-                    <Td className="text-right">{formatCop(s.amount)}</Td>
-                    <Td className="text-right font-medium text-emerald-700">
+                    <Td className="font-mono text-xs text-muted">
+                      {s.contactExternalId}
+                    </Td>
+                    <Td className="text-muted">{formatDate(s.soldAt)}</Td>
+                    <Td className="text-right text-foreground tabular-nums">
+                      {formatCop(s.amount)}
+                    </Td>
+                    <Td className="text-right font-medium text-emerald-400 tabular-nums">
                       {formatCop(s.creditToCampaign)}
                     </Td>
                   </tr>
@@ -128,11 +138,29 @@ function DrilldownContent({ data }: { data: CampaignDrilldown }) {
   );
 }
 
-function Stat({ label, value }: { label: string; value: string }) {
+function Stat({
+  label,
+  value,
+  tone = "neutral",
+}: {
+  label: string;
+  value: string;
+  tone?: "neutral" | "positive" | "negative";
+}) {
   return (
     <div>
-      <p className="text-xs text-slate-500">{label}</p>
-      <p className="font-semibold text-slate-900">{value}</p>
+      <p className="text-[11px] uppercase tracking-wide text-muted">{label}</p>
+      <p
+        className={
+          tone === "positive"
+            ? "font-semibold text-emerald-400"
+            : tone === "negative"
+              ? "font-semibold text-red-400"
+              : "font-semibold text-foreground"
+        }
+      >
+        {value}
+      </p>
     </div>
   );
 }
@@ -154,5 +182,5 @@ function Td({
   children: React.ReactNode;
   className?: string;
 }) {
-  return <td className={`px-3 py-2 ${className ?? ""}`}>{children}</td>;
+  return <td className={`px-3 py-2.5 ${className ?? ""}`}>{children}</td>;
 }

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardHeader } from "@/components/ui/card";
 import { QueryBoundary } from "@/components/ui/query-boundary";
+import { TableSkeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/cn";
 import { formatCop, formatPct, formatRoas } from "@/lib/format";
 import type { CampaignReportRow } from "@/lib/types";
@@ -25,12 +26,14 @@ export function CampaignTable() {
   return (
     <Card>
       <CardHeader
+        icon="clipboard"
         title="Reporte por campaña"
-        description="Reconciliación ROAS real (POS) vs ROAS reportado por la plataforma. Clic para ver el detalle."
+        description="Reconciliación ROAS real (POS) vs ROAS plataforma. Clic en una fila para el detalle."
         action={<ExportButtons />}
       />
       <QueryBoundary
         query={query}
+        skeleton={<TableSkeleton />}
         isEmpty={(rows) => rows.length === 0}
         emptyTitle="Sin campañas"
         emptyDescription="No hay campañas en el alcance de los filtros."
@@ -38,7 +41,7 @@ export function CampaignTable() {
         {(rows) => (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="border-b border-slate-100 text-left text-xs text-slate-500">
+              <thead className="border-b border-border text-left text-[11px] uppercase tracking-wide text-muted">
                 <tr>
                   <Th>Campaña</Th>
                   <Th className="text-right">Inversión</Th>
@@ -49,50 +52,50 @@ export function CampaignTable() {
                   <Th className="text-right">Conv.</Th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-border/60">
                 {rows.map((r) => (
                   <tr
                     key={r.campaignId}
                     onClick={() => setSelected(r)}
                     className={cn(
-                      "cursor-pointer hover:bg-slate-50",
-                      r.flagged && "bg-amber-50/60 hover:bg-amber-50",
+                      "cursor-pointer transition-colors hover:bg-white/[0.03]",
+                      r.flagged && "bg-amber-400/[0.04] hover:bg-amber-400/[0.07]",
                     )}
                   >
                     <Td>
                       <div className="flex items-center gap-2">
-                        <span className="font-medium text-slate-800">
+                        <span className="font-medium text-foreground">
                           {r.name}
                         </span>
                         {r.flagged && <Badge tone="amber">&gt;5%</Badge>}
                       </div>
                     </Td>
-                    <Td className="text-right text-slate-600">
+                    <Td className="text-right text-muted tabular-nums">
                       {formatCop(r.spend)}
                     </Td>
-                    <Td className="text-right font-medium text-slate-900">
+                    <Td className="text-right font-medium text-foreground tabular-nums">
                       {formatCop(r.attributedRevenue)}
                     </Td>
                     <Td
                       className={cn(
-                        "text-right font-semibold",
-                        r.roasReal >= 1 ? "text-emerald-600" : "text-red-600",
+                        "text-right font-semibold tabular-nums",
+                        r.roasReal >= 1 ? "text-emerald-400" : "text-red-400",
                       )}
                     >
                       {formatRoas(r.roasReal)}
                     </Td>
-                    <Td className="text-right text-slate-600">
+                    <Td className="text-right text-muted tabular-nums">
                       {formatRoas(r.roasPlatform)}
                     </Td>
                     <Td
                       className={cn(
-                        "text-right",
-                        r.flagged ? "font-semibold text-amber-700" : "text-slate-500",
+                        "text-right tabular-nums",
+                        r.flagged ? "font-semibold text-amber-400" : "text-muted",
                       )}
                     >
                       {formatPct(r.reconciliationDiffPct)}
                     </Td>
-                    <Td className="text-right text-slate-600">
+                    <Td className="text-right text-muted tabular-nums">
                       {r.conversions}
                     </Td>
                   </tr>
@@ -120,7 +123,7 @@ function Th({
   className?: string;
 }) {
   return (
-    <th className={cn("px-5 py-2.5 font-medium", className)}>{children}</th>
+    <th className={cn("px-5 py-3 font-medium", className)}>{children}</th>
   );
 }
 
@@ -131,5 +134,5 @@ function Td({
   children: React.ReactNode;
   className?: string;
 }) {
-  return <td className={cn("px-5 py-3", className)}>{children}</td>;
+  return <td className={cn("px-5 py-3.5", className)}>{children}</td>;
 }
