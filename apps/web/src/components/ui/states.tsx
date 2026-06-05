@@ -1,11 +1,12 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/cn";
+import { Button } from "./button";
 
-/** Spinner mínimo (SVG, sin dependencias). */
+/** Spinner mínimo (SVG, sin dependencias) con el acento de marca. */
 export function Spinner({ className }: { className?: string }) {
   return (
     <svg
-      className={cn("animate-spin text-slate-400", className)}
+      className={cn("animate-spin text-emerald-400", className)}
       width="20"
       height="20"
       viewBox="0 0 24 24"
@@ -18,7 +19,7 @@ export function Spinner({ className }: { className?: string }) {
         cy="12"
         r="10"
         stroke="currentColor"
-        strokeOpacity="0.25"
+        strokeOpacity="0.2"
         strokeWidth="4"
       />
       <path
@@ -52,7 +53,7 @@ function CenteredMessage({
 
 export function LoadingState({ label = "Cargando…" }: { label?: string }) {
   return (
-    <CenteredMessage className="text-slate-500">
+    <CenteredMessage className="text-muted">
       <Spinner />
       <span>{label}</span>
     </CenteredMessage>
@@ -67,9 +68,9 @@ export function EmptyState({
   description?: string;
 }) {
   return (
-    <CenteredMessage className="text-slate-500">
-      <p className="font-medium text-slate-600">{title}</p>
-      {description && <p className="text-slate-400">{description}</p>}
+    <CenteredMessage className="text-muted">
+      <p className="font-medium text-foreground/80">{title}</p>
+      {description && <p className="text-muted">{description}</p>}
     </CenteredMessage>
   );
 }
@@ -82,16 +83,13 @@ export function ErrorState({
   onRetry?: () => void;
 }) {
   return (
-    <CenteredMessage className="text-red-600">
+    <CenteredMessage className="text-red-300">
       <p className="font-medium">No se pudo cargar</p>
-      {message && <p className="text-red-400">{message}</p>}
+      {message && <p className="text-red-300/60">{message}</p>}
       {onRetry && (
-        <button
-          onClick={onRetry}
-          className="mt-1 text-xs font-medium text-slate-600 underline hover:text-slate-900"
-        >
+        <Button variant="secondary" onClick={onRetry} className="mt-1">
           Reintentar
-        </button>
+        </Button>
       )}
     </CenteredMessage>
   );

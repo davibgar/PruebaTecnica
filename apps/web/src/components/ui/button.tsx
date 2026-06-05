@@ -1,16 +1,18 @@
 import type { ButtonHTMLAttributes } from "react";
 import { cn } from "@/lib/cn";
 
-type Variant = "primary" | "secondary" | "ghost" | "danger";
+type Variant = "primary" | "brand" | "secondary" | "ghost" | "danger";
 
 const VARIANTS: Record<Variant, string> = {
   primary:
-    "bg-slate-900 text-white hover:bg-slate-700 disabled:bg-slate-300",
+    "bg-foreground text-background hover:opacity-90 disabled:opacity-40",
+  brand:
+    "bg-emerald-400/15 text-emerald-300 ring-1 ring-inset ring-emerald-400/30 hover:bg-emerald-400/25 disabled:opacity-40",
   secondary:
-    "border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 disabled:opacity-50",
-  ghost: "text-slate-600 hover:bg-slate-100 disabled:opacity-50",
+    "border border-border-strong bg-white/[0.03] text-foreground hover:bg-white/[0.07] disabled:opacity-40",
+  ghost: "text-muted hover:bg-white/5 hover:text-foreground disabled:opacity-40",
   danger:
-    "border border-red-200 bg-white text-red-600 hover:bg-red-50 disabled:opacity-50",
+    "text-red-300/90 ring-1 ring-inset ring-red-400/20 hover:bg-red-400/10 disabled:opacity-40",
 };
 
 export function Button({
@@ -21,7 +23,7 @@ export function Button({
   return (
     <button
       className={cn(
-        "inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors disabled:cursor-not-allowed",
+        "inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-all duration-150 active:scale-[0.98] disabled:cursor-not-allowed disabled:active:scale-100",
         VARIANTS[variant],
         className,
       )}
